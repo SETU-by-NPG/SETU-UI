@@ -3,10 +3,11 @@ import { Outlet, NavLink, useNavigate } from "react-router";
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen, Calendar,
   ClipboardCheck, BarChart3, Bell, Settings, Menu, X, LogOut,
-  ChevronDown, School, UserCheck, FileText, MessageSquare,
-  Shield, ScrollText, Library, DoorOpen, Monitor, TicketCheck
+  ChevronDown, ChevronLeft, ChevronRight, School, UserCheck, FileText, MessageSquare,
+  Shield, ScrollText, Library, DoorOpen, Monitor, TicketCheck, PanelLeftClose, PanelLeftOpen
 } from "lucide-react";
 import { type Role } from "../data/mock-data";
+import { notifications } from "../data/mock-data";
 
 interface NavItem {
   label: string;
@@ -93,13 +94,6 @@ const emailToRole: Record<string, Role> = {
   "priya.n@setu.edu": "librarian",
 };
 
-const mockNotifications = [
-  { id: 1, title: 'New assignment posted', message: 'Mathematics homework due Friday', time: '5 min ago', read: false },
-  { id: 2, title: 'Grade updated', message: 'Your English essay has been graded', time: '1 hour ago', read: false },
-  { id: 3, title: 'System maintenance', message: 'Scheduled maintenance tonight at 10 PM', time: '3 hours ago', read: true },
-  { id: 4, title: 'Library book due', message: 'Return "Introduction to React" by Friday', time: '1 day ago', read: true },
-];
-
 export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [role, setRole] = useState<Role>("admin");
@@ -166,15 +160,17 @@ export function AppShell() {
               end={item.path === "/"}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${sidebarCollapsed ? 'justify-center' : ''} ${
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`
               }
             >
-              {item.icon}
-              <span style={{ fontSize: "0.875rem" }}>{item.label}</span>
+              <span className={sidebarCollapsed ? 'w-6 h-6 flex items-center justify-center' : ''}>
+                {item.icon}
+              </span>
+              {!sidebarCollapsed && <span style={{ fontSize: "0.875rem" }}>{item.label}</span>}
             </NavLink>
           </div>
         );
@@ -188,84 +184,75 @@ export function AppShell() {
         end={item.path === "/"}
         onClick={() => setSidebarOpen(false)}
         className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+          `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${sidebarCollapsed ? 'justify-center' : ''} ${
             isActive
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           }`
         }
       >
-        {item.icon}
-         {!sidebarCollapsed && <span style={{ fontSize: "0.875rem" }}>{item.label}</span>}
+        <span className={sidebarCollapsed ? 'w-6 h-6 flex items-center justify-center' : ''}>
+          {item.icon}
+        </span>
+        {!sidebarCollapsed && <span style={{ fontSize: "0.875rem" }}>{item.label}</span>}
       </NavLink>
     ));
   };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Mobile overlay */}
+      {/* Mobile overlay - backdrop when sidebar is open on mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/30 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-transition-all ${sidebarCollapsed ? 'w-16' : 'w-64'}  w-64 bg-card border-r border-border flex flex-col transition-transform duration-200 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        className={`fixed top-16 left-0 bottom-0 ${sidebarCollapsed ? 'w-20' : 'w-64'} bg-card border-r border-border flex flex-col transition-all duration-300 ${
+          sidebarOpen ? "translate-x-0 z-40" : "-translate-x-full md:translate-x-0 md:z-30"
         }`}
       >
-        {/* Logo */}
-        <div className="h-16 flex items-center gap-3 px-5 border-b border-border shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <School className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="tracking-tight" style={{ fontSize: "1.125rem", fontWeight: 600 }}>SETU</span>
+        {/* Mobile close button - visible when sidebar is open on mobile */}
+        {sidebarOpen && (
           <button
-            className="ml-auto lg:hidden p-1 rounded-md hover:bg-muted"
+            className="absolute top-3 right-3 p-1 rounded-md hover:bg-muted md:hidden"
             onClick={() => setSidebarOpen(false)}
+            title="Close sidebar"
           >
             <X className="w-5 h-5" />
           </button>
-        </div>
-
-                       */}
+        )}
+        
         <nav className="flex-1 overflow-y-auto py-3 px-3">
-                        {/* Collapse Button */}
-              <button
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="mb-4 flex w-full items-center justify-center rounded-lg px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-                title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-
           <div className="space-y-0.5">
             {renderNav()}
           </div>
         </nav>
 
         {/* User / Role Switcher */}
-        <div className="border-t border-border p-3">
+        <div className={`border-t border-border ${sidebarCollapsed ? 'p-1' : 'p-3'}`}>
           <div className="relative">
             <button
               onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors ${sidebarCollapsed ? 'justify-center' : ''}`}
             >
               <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
                 <UserCheck className="w-4 h-4 text-muted-foreground" />
               </div>
-              <div className="flex-1 text-left min-w-0">
-                <p className="truncate" style={{ fontSize: "0.875rem", fontWeight: 500 }}>{roleNames[role]}</p>
-                <p className="text-muted-foreground truncate" style={{ fontSize: "0.75rem" }}>{roleLabels[role]}</p>
-              </div>
-              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} />
+              {!sidebarCollapsed && (
+                <div className="flex-1 text-left min-w-0">
+                  <p className="truncate" style={{ fontSize: "0.875rem", fontWeight: 500 }}>{roleNames[role]}</p>
+                  <p className="text-muted-foreground truncate" style={{ fontSize: "0.75rem" }}>{roleLabels[role]}</p>
+                </div>
+              )}
+              {!sidebarCollapsed && <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} />}
             </button>
 
             {roleMenuOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50">
+              <div className={`absolute bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50 ${sidebarCollapsed ? 'bottom-full left-0 mb-2 w-48' : 'bottom-full left-0 right-0 mb-1'}`}>
                 <p className="px-3 py-2 text-muted-foreground border-b border-border" style={{ fontSize: "0.75rem", fontWeight: 500 }}>Switch Role</p>
                 {(["admin", "teacher", "student", "parent", "librarian"] as Role[]).map((r) => (
                   <button
@@ -287,23 +274,47 @@ export function AppShell() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Bar */}
-        <header className="h-16 border-b border-border bg-card flex items-center px-4 lg:px-6 gap-4 shrink-0">
-          <button
-            className="lg:hidden p-2 rounded-md hover:bg-muted"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="flex-1" />
-          <span
-            className="hidden sm:inline px-2.5 py-1 rounded-full bg-muted text-muted-foreground"
-            style={{ fontSize: "0.75rem", fontWeight: 500 }}
-          >
-            {roleLabels[role]}
-          </span>
-          <button className="relative p-2 rounded-md hover:bg-muted">
+      <div className={`flex-1 flex flex-col min-w-0 pt-16 transition-all duration-300 ml-0 ${sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
+        {/* Top Bar - Fixed at top */}
+        <header className="fixed top-0 left-0 right-0 h-16 border-b border-border bg-card flex justify-between items-center px-4 lg:px-6 shrink-0 z-50">
+          {/* Left side: Logo and Hamburger - pushed to left edge */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Logo */}
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
+              <School className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className="tracking-tight" style={{ fontSize: "1.125rem", fontWeight: 600 }}>SETU</span>
+            {/* Hamburger Menu - sidebar toggle */}
+            <button
+              className="p-2 rounded-md hover:bg-muted"
+              onClick={() => {
+                if (window.innerWidth < 768) {
+                  setSidebarOpen(!sidebarOpen);
+                } else {
+                  setSidebarCollapsed(!sidebarCollapsed);
+                }
+              }}
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {sidebarCollapsed ? (
+                <PanelLeftOpen className="w-5 h-5" />
+              ) : sidebarOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <PanelLeftClose className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+
+          {/* Right side: IT Administrator Tag, Notifications, Log Out - pushed to right edge */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <span
+              className="hidden sm:inline px-2.5 py-1 rounded-full bg-muted text-muted-foreground"
+              style={{ fontSize: "0.75rem", fontWeight: 500 }}
+            >
+              {roleLabels[role]}
+            </span>
+            <button className="relative p-2 rounded-md hover:bg-muted">
             {/* Notifications */}
               <div className="relative">
                 <button
@@ -311,7 +322,7 @@ export function AppShell() {
                   className="relative rounded-full p-1.5 text-foreground hover:bg-accent"
                 >
                   <Bell className="h-5 w-5" />
-                  {mockNotifications.filter(n => !n.read).length > 0 && (
+                  {notifications.filter(n => !n.read).length > 0 && (
                     <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-card" />
                   )}
                 </button>
@@ -322,10 +333,10 @@ export function AppShell() {
                       <h3 className="font-semibold">Notifications</h3>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
-                      {mockNotifications.length === 0 ? (
+                      {notifications.length === 0 ? (
                         <p className="p-4 text-center text-muted-foreground">No notifications</p>
                       ) : (
-                        mockNotifications.map(notif => (
+                        notifications.map(notif => (
                           <div
                             key={notif.id}
                             className={`border-b p-4 hover:bg-muted ${!notif.read ? 'bg-muted/50' : ''}`}
@@ -347,8 +358,9 @@ export function AppShell() {
               </div>
             </button>
             <button onClick={handleLogout} className="p-2 rounded-md hover:bg-muted" title="Sign out">
-            <LogOut className="w-5 h-5 text-muted-foreground" />
-          </button>
+              <LogOut className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
         </header>
 
         {/* Page Content */}
