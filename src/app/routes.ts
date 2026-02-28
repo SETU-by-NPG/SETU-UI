@@ -25,6 +25,7 @@ import AcademicPage from "./pages/academic";
 import ClassesPage from "./pages/classes";
 import SubjectsPage from "./pages/subjects";
 import TimetableBuilderPage from "./pages/timetable-builder";
+import StudentDetailPage from "./pages/student-detail";
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
       { path: "user-management", Component: UserManagementPage },
       { path: "roles-permissions", Component: RolesPermissionsPage },
       { path: "students", Component: StudentsPage },
+      { path: "students/:id", Component: StudentDetailPage },
       { path: "teachers", Component: TeachersPage },
       { path: "attendance", Component: AttendancePage },
       { path: "assignments", Component: AssignmentsPage },
