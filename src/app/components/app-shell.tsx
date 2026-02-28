@@ -344,7 +344,9 @@ export function AppShell() {
                     </div>
                   </div>
                 )}
-              </div>utton onClick={handleLogout} className="p-2 rounded-md hover:bg-muted" title="Sign out">
+              </div>
+            </button>
+            <button onClick={handleLogout} className="p-2 rounded-md hover:bg-muted" title="Sign out">
             <LogOut className="w-5 h-5 text-muted-foreground" />
           </button>
         </header>
