@@ -20,6 +20,7 @@ import RoomsPage from "./pages/rooms";
 import EquipmentPage from "./pages/equipment";
 import TicketsPage from "./pages/tickets";
 import NotFoundPage from "./pages/not-found";
+import SetupPage from "./pages/setup";
 
 export const router = createBrowserRouter([
   {
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
       { path: "rooms", Component: RoomsPage },
       { path: "equipment", Component: EquipmentPage },
       { path: "tickets", Component: TicketsPage },
+      { path: "setup", Component: SetupPage },
       { path: "*", Component: NotFoundPage },
     ],
   },
