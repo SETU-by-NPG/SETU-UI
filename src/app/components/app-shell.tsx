@@ -231,7 +231,9 @@ export function AppShell() {
           </button>
         </div>
 
-                      {/* Collapse Button */}
+                       */}
+        <nav className="flex-1 overflow-y-auto py-3 px-3">
+                        {/* Collapse Button */}
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                 className="mb-4 flex w-full items-center justify-center rounded-lg px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -240,8 +242,6 @@ export function AppShell() {
                 <Menu className="h-5 w-5" />
               </button>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-3 px-3">
           <div className="space-y-0.5">
             {renderNav()}
           </div>
