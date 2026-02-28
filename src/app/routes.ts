@@ -23,6 +23,7 @@ import NotFoundPage from "./pages/not-found";
 import SetupPage from "./pages/setup";
 import AcademicPage from "./pages/academic";
 import ClassesPage from "./pages/classes";
+import SubjectsPage from "./pages/subjects";
 
 export const router = createBrowserRouter([
   {
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
       { path: "setup", Component: SetupPage },
       { path: "academic", Component: AcademicPage },
       { path: "classes", Component: ClassesPage },
+      { path: "subjects", Component: SubjectsPage },
       { path: "*", Component: NotFoundPage },
     ],
   },
