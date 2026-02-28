@@ -21,6 +21,7 @@ import EquipmentPage from "./pages/equipment";
 import TicketsPage from "./pages/tickets";
 import NotFoundPage from "./pages/not-found";
 import SetupPage from "./pages/setup";
+import AcademicPage from "./pages/academic";
 
 export const router = createBrowserRouter([
   {
@@ -50,6 +51,7 @@ export const router = createBrowserRouter([
       { path: "equipment", Component: EquipmentPage },
       { path: "tickets", Component: TicketsPage },
       { path: "setup", Component: SetupPage },
+      { path: "academic", Component: AcademicPage },
       { path: "*", Component: NotFoundPage },
     ],
   },
