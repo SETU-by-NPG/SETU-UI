@@ -24,6 +24,7 @@ import SetupPage from "./pages/setup";
 import AcademicPage from "./pages/academic";
 import ClassesPage from "./pages/classes";
 import SubjectsPage from "./pages/subjects";
+import TimetableBuilderPage from "./pages/timetable-builder";
 
 export const router = createBrowserRouter([
   {
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
       { path: "academic", Component: AcademicPage },
       { path: "classes", Component: ClassesPage },
       { path: "subjects", Component: SubjectsPage },
+      { path: "timetable-builder", Component: TimetableBuilderPage },
       { path: "*", Component: NotFoundPage },
     ],
   },

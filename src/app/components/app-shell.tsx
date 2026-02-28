@@ -34,6 +34,7 @@ const navByRole: Record<Role, NavItem[]> = {
     { label: "Academic Year", path: "/academic", icon: <Calendar className="w-5 h-5" /> },
     { label: "Classes & Sections", path: "/classes", icon: <Users className="w-5 h-5" /> },
     { label: "Subjects", path: "/subjects", icon: <BookOpen className="w-5 h-5" /> },
+    { label: "Timetable Builder", path: "/timetable-builder", icon: <Calendar className="w-5 h-5" /> },
     { label: "System Settings", path: "/settings", icon: <Settings className="w-5 h-5" /> },
   ],
   teacher: [
