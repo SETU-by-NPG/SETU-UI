@@ -93,10 +93,19 @@ const emailToRole: Record<string, Role> = {
   "priya.n@setu.edu": "librarian",
 };
 
+const mockNotifications = [
+  { id: 1, title: 'New assignment posted', message: 'Mathematics homework due Friday', time: '5 min ago', read: false },
+  { id: 2, title: 'Grade updated', message: 'Your English essay has been graded', time: '1 hour ago', read: false },
+  { id: 3, title: 'System maintenance', message: 'Scheduled maintenance tonight at 10 PM', time: '3 hours ago', read: true },
+  { id: 4, title: 'Library book due', message: 'Return "Introduction to React" by Friday', time: '1 day ago', read: true },
+];
+
 export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [role, setRole] = useState<Role>("admin");
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+      const [notificationsOpen, setNotificationsOpen] = useState(false);
   const navigate = useNavigate();
 
   // Check auth on mount
@@ -147,7 +156,7 @@ export function AppShell() {
         if (item.section) lastSection = item.section;
         return (
           <div key={item.path}>
-            {showSection && (
+            {showSection  && !sidebarCollapsed && (
               <p className="px-3 pt-4 pb-1 text-muted-foreground" style={{ fontSize: "0.6875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 {item.section}
               </p>
@@ -187,7 +196,7 @@ export function AppShell() {
         }
       >
         {item.icon}
-        <span style={{ fontSize: "0.875rem" }}>{item.label}</span>
+        <span {!sidebarCollapsed && <span style={{ fontSize: "0.875rem" }}>{item.label}</span>}
       </NavLink>
     ));
   };
@@ -204,7 +213,7 @@ export function AppShell() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-card border-r border-border flex flex-col transition-transform duration-200 ${
+        className={`fixed lg:static inset-y-0 left-0 z-transition-all ${sidebarCollapsed ? 'w-16' : 'w-64'}  w-64 bg-card border-r border-border flex flex-col transition-transform duration-200 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -221,6 +230,15 @@ export function AppShell() {
             <X className="w-5 h-5" />
           </button>
         </div>
+
+                      {/* Collapse Button */}
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="mb-4 flex w-full items-center justify-center rounded-lg px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                <Menu className="h-5 w-5" />
+              </button>
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-3 px-3">
@@ -286,10 +304,47 @@ export function AppShell() {
             {roleLabels[role]}
           </span>
           <button className="relative p-2 rounded-md hover:bg-muted">
-            <Bell className="w-5 h-5 text-muted-foreground" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
-          </button>
-          <button onClick={handleLogout} className="p-2 rounded-md hover:bg-muted" title="Sign out">
+            {/* Notifications */}
+              <div className="relative">
+                <button
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                  className="relative rounded-full p-1.5 text-foreground hover:bg-accent"
+                >
+                  <Bell className="h-5 w-5" />
+                  {mockNotifications.filter(n => !n.read).length > 0 && (
+                    <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-card" />
+                  )}
+                </button>
+
+                {notificationsOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-80 rounded-lg border bg-card shadow-lg z-50">
+                    <div className="border-b p-4">
+                      <h3 className="font-semibold">Notifications</h3>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {mockNotifications.length === 0 ? (
+                        <p className="p-4 text-center text-muted-foreground">No notifications</p>
+                      ) : (
+                        mockNotifications.map(notif => (
+                          <div
+                            key={notif.id}
+                            className={`border-b p-4 hover:bg-muted ${!notif.read ? 'bg-muted/50' : ''}`}
+                          >
+                            <div className="flex justify-between">
+                              <p className="font-medium">{notif.title}</p>
+                              {!notif.read && (
+                                <span className="h-2 w-2 rounded-full bg-blue-500" />
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">{notif.message}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{notif.time}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>utton onClick={handleLogout} className="p-2 rounded-md hover:bg-muted" title="Sign out">
             <LogOut className="w-5 h-5 text-muted-foreground" />
           </button>
         </header>
