@@ -22,6 +22,7 @@ import TicketsPage from "./pages/tickets";
 import NotFoundPage from "./pages/not-found";
 import SetupPage from "./pages/setup";
 import AcademicPage from "./pages/academic";
+import ClassesPage from "./pages/classes";
 
 export const router = createBrowserRouter([
   {
@@ -52,6 +53,7 @@ export const router = createBrowserRouter([
       { path: "tickets", Component: TicketsPage },
       { path: "setup", Component: SetupPage },
       { path: "academic", Component: AcademicPage },
+      { path: "classes", Component: ClassesPage },
       { path: "*", Component: NotFoundPage },
     ],
   },

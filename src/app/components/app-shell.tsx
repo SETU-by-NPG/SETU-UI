@@ -32,6 +32,7 @@ const navByRole: Record<Role, NavItem[]> = {
     { label: "Audit Logs", path: "/audit-logs", icon: <ScrollText className="w-5 h-5" />, section: "System" },
     { label: "School Setup", path: "/setup", icon: <School className="w-5 h-5" /> },
     { label: "Academic Year", path: "/academic", icon: <Calendar className="w-5 h-5" /> },
+    { label: "Classes & Sections", path: "/classes", icon: <Users className="w-5 h-5" /> },
     { label: "System Settings", path: "/settings", icon: <Settings className="w-5 h-5" /> },
   ],
   teacher: [
