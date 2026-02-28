@@ -196,7 +196,7 @@ export function AppShell() {
         }
       >
         {item.icon}
-        <span {!sidebarCollapsed && <span style={{ fontSize: "0.875rem" }}>{item.label}</span>}
+         {!sidebarCollapsed && <span style={{ fontSize: "0.875rem" }}>{item.label}</span>}
       </NavLink>
     ));
   };
