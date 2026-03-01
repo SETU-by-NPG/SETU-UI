@@ -686,3 +686,18 @@ export const tickets: Ticket[] = [
   { id: "tk7", ticketNo: "TK-2026-036", title: "Printer jam in Staff Room", description: "Staff room printer is jammed and showing error E-04.", category: "hardware", priority: "low", status: "closed", createdBy: "Mr. Peter Brown", createdByRole: "Teacher", assignedTo: "Raj Patel", createdAt: "2026-02-24 13:00", updatedAt: "2026-02-24 15:00", resolution: "Paper jam cleared and test print successful." },
   { id: "tk8", ticketNo: "TK-2026-035", title: "Install Zoom on Lab 3 PCs", description: "Need Zoom installed on all Lab 3 PCs for upcoming virtual guest lecture.", category: "software", priority: "medium", status: "resolved", createdBy: "Mr. Kevin Lee", createdByRole: "Teacher", assignedTo: "Raj Patel", createdAt: "2026-02-23 11:00", updatedAt: "2026-02-24 09:00", resolution: "Zoom installed on all 32 PCs via remote deployment." },
 ];
+
+export interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  time: string;
+  read: boolean;
+}
+
+export const notifications: Notification[] = [
+  { id: 1, title: 'New assignment posted', message: 'Mathematics homework due Friday', time: '5 min ago', read: false },
+  { id: 2, title: 'Grade updated', message: 'Your English essay has been graded', time: '1 hour ago', read: false },
+  { id: 3, title: 'System maintenance', message: 'Scheduled maintenance tonight at 10 PM', time: '3 hours ago', read: true },
+  { id: 4, title: 'Library book due', message: 'Return "Introduction to React" by Friday', time: '1 day ago', read: true },
+];

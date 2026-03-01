@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { Plus, X, GraduationCap } from "lucide-react";
 import { DataTable } from "../components/data-table";
 import { StatusBadge } from "../components/status-badge";
@@ -18,7 +19,11 @@ export default function TeachersPage() {
             <span style={{ fontSize: "0.75rem", fontWeight: 600 }}>{t.name.split(" ").filter(n => n !== "Mr." && n !== "Ms.").map(n => n[0]).join("")}</span>
           </div>
           <div>
-            <p style={{ fontWeight: 500 }}>{t.name}</p>
+            <p style={{ fontWeight: 500 }}>
+              <Link to={`/teachers/${t.id}`} className="hover:underline">
+                {t.name}
+              </Link>
+            </p>
             <p className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>{t.email}</p>
           </div>
         </div>

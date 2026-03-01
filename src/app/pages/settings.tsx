@@ -1,4 +1,5 @@
-import { useState } from "react";
+﻿import { useState } from "react";
+import { useAppSettings, CURRENCIES } from "../context/app-settings-context"; "../context/app-settings-context";
 import { useOutletContext } from "react-router";
 import {
   Save, Check, School, Shield, Plug, Database, Bell, Globe,
@@ -41,6 +42,7 @@ const modules = [
 ];
 
 export default function SettingsPage() {
+  const { currency, libraryFinesEnabled, setCurrency, setLibraryFinesEnabled } = useAppSettings();
   const { role } = useOutletContext<{ role: Role }>();
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState(role === "admin" ? "overview" : "school");
@@ -70,7 +72,7 @@ export default function SettingsPage() {
   if (role === "admin") {
     return (
       <div className="flex h-[calc(100vh-8rem)] -m-4 lg:-m-6">
-        {/* Left sidebar navigation — Azure style */}
+        {/* Left sidebar navigation â€” Azure style */}
         <div className="w-56 bg-card border-r border-border shrink-0 flex flex-col overflow-hidden">
           <div className="p-4 border-b border-border">
             <h2 style={{ fontSize: "0.9375rem", fontWeight: 600 }}>System Settings</h2>
@@ -127,7 +129,7 @@ export default function SettingsPage() {
                   {[
                     { label: "Plan", value: subscription.planName },
                     { label: "Region", value: subscription.region },
-                    { label: "Billing", value: `${subscription.billingCycle} — renews ${subscription.nextBillingDate}` },
+                    { label: "Billing", value: `${subscription.billingCycle} â€” renews ${subscription.nextBillingDate}` },
                     { label: "Support", value: subscription.supportTier },
                   ].map((item) => (
                     <div key={item.label}>
@@ -169,7 +171,7 @@ export default function SettingsPage() {
                         <span style={{ fontSize: "0.875rem" }}>{svc.name}</span>
                       </div>
                       <div className="flex items-center gap-4">
-                        {svc.latency !== "—" && <span className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>{svc.latency}</span>}
+                        {svc.latency !== "â€”" && <span className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>{svc.latency}</span>}
                         <span className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>{svc.uptime} uptime</span>
                         <StatusBadge status={svc.status} />
                       </div>
@@ -268,7 +270,7 @@ export default function SettingsPage() {
           {activeTab === "classes" && (
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="space-y-2">
-                {["Grade 10 — Sections: A, B", "Grade 11 — Sections: A, B", "Grade 12 — Sections: A"].map((cls) => (
+                {["Grade 10 â€” Sections: A, B", "Grade 11 â€” Sections: A, B", "Grade 12 â€” Sections: A"].map((cls) => (
                   <div key={cls} className="flex items-center justify-between p-3 rounded-lg border border-border">
                     <span style={{ fontSize: "0.875rem" }}>{cls}</span>
                     <button className="text-muted-foreground hover:text-foreground" style={{ fontSize: "0.8125rem" }}>Edit</button>
@@ -283,7 +285,7 @@ export default function SettingsPage() {
           {activeTab === "subjects" && (
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="space-y-2">
-                {["Mathematics — Algebra, Calculus", "Science — Physics, Chemistry", "English — Literature, Grammar", "Social Studies — History, Geography", "Computer Science — Programming, Data Structures"].map((sub) => (
+                {["Mathematics â€” Algebra, Calculus", "Science â€” Physics, Chemistry", "English â€” Literature, Grammar", "Social Studies â€” History, Geography", "Computer Science â€” Programming, Data Structures"].map((sub) => (
                   <div key={sub} className="flex items-center justify-between p-3 rounded-lg border border-border">
                     <span style={{ fontSize: "0.875rem" }}>{sub}</span>
                     <button className="text-muted-foreground hover:text-foreground" style={{ fontSize: "0.8125rem" }}>Edit</button>
@@ -300,6 +302,52 @@ export default function SettingsPage() {
               <div className="mb-6">
                 <h1 style={{ fontSize: "1.25rem" }}>Platform Modules</h1>
                 <p className="text-muted-foreground mt-1" style={{ fontSize: "0.875rem" }}>Enable or disable modules for your organization. Core modules cannot be disabled.</p>
+            {/*  Currency & Library Fine Settings  */}
+            <div className="mt-6 rounded-xl border border-border bg-card p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Globe className="w-5 h-5 text-primary" />
+                <div>
+                  <h3 style={{ fontWeight: 600 }}>Financial Settings</h3>
+                  <p className="text-muted-foreground" style={{ fontSize: '0.875rem' }}>Configure currency and library fine preferences.</p>
+                </div>
+              </div>
+              <div className="grid gap-5">
+                {/* Currency */}
+                <div className="flex items-center justify-between py-3 border-b border-border">
+                  <div>
+                    <p style={{ fontWeight: 500, fontSize: '0.9rem' }}>Platform Currency</p>
+                    <p className="text-muted-foreground" style={{ fontSize: '0.8rem' }}>Symbol used for all monetary values across the platform.</p>
+                  </div>
+                  <select
+                    value={currency.code}
+                    onChange={(e) => { const c = CURRENCIES.find(x => x.code === e.target.value); if (c) setCurrency(c); }}
+                    className="w-52 px-3 py-2 rounded-lg border border-border bg-input-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    style={{ fontSize: '0.875rem' }}
+                  >
+                    {CURRENCIES.map(c => (
+                      <option key={c.code} value={c.code}>{c.symbol}  {c.name} ({c.code})</option>
+                    ))}
+                  </select>
+                </div>
+                {/* Library Fines Toggle */}
+                <div className="flex items-center justify-between py-3">
+                  <div>
+                    <p style={{ fontWeight: 500, fontSize: '0.9rem' }}>Library Overdue Fines</p>
+                    <p className="text-muted-foreground" style={{ fontSize: '0.8rem' }}>When enabled, overdue library books accrue fines displayed in the library module.</p>
+                  </div>
+                  <button
+                    onClick={() => setLibraryFinesEnabled(!libraryFinesEnabled)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${libraryFinesEnabled ? 'bg-primary' : 'bg-muted'}`}
+                    role="switch"
+                    aria-checked={libraryFinesEnabled}
+                  >
+                    <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${libraryFinesEnabled ? 'translate-x-6' : 'translate-x-1'}`}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {modules.map((mod) => (
@@ -423,8 +471,8 @@ export default function SettingsPage() {
                     </div>
                     <p className="text-muted-foreground mb-3" style={{ fontSize: "0.8125rem" }}>{integ.description}</p>
                     <div className="flex items-center justify-between">
-                      {integ.lastSync !== "—" && <span className="text-muted-foreground" style={{ fontSize: "0.7rem" }}>Last sync: {integ.lastSync}</span>}
-                      {integ.lastSync === "—" && <span />}
+                      {integ.lastSync !== "â€”" && <span className="text-muted-foreground" style={{ fontSize: "0.7rem" }}>Last sync: {integ.lastSync}</span>}
+                      {integ.lastSync === "â€”" && <span />}
                       <div className="flex items-center gap-2">
                         {integ.status === "connected" && <button className="px-2.5 py-1 rounded-lg border border-border hover:bg-muted" style={{ fontSize: "0.75rem" }}><RefreshCw className="w-3 h-3 inline mr-1" />Sync</button>}
                         <button className={`px-2.5 py-1 rounded-lg ${integ.status === "connected" ? "border border-red-200 text-red-600 hover:bg-red-50" : "bg-primary text-primary-foreground hover:opacity-90"}`} style={{ fontSize: "0.75rem" }}>
@@ -607,7 +655,7 @@ export default function SettingsPage() {
       {activeTab === "classes" && (
         <div className="bg-card border border-border rounded-xl p-6 max-w-2xl">
           <div className="space-y-2">
-            {["Grade 10 — Sections: A, B", "Grade 11 — Sections: A, B", "Grade 12 — Sections: A"].map(cls => (
+            {["Grade 10 â€” Sections: A, B", "Grade 11 â€” Sections: A, B", "Grade 12 â€” Sections: A"].map(cls => (
               <div key={cls} className="flex items-center justify-between p-3 rounded-lg border border-border">
                 <span style={{ fontSize: "0.875rem" }}>{cls}</span><button className="text-muted-foreground hover:text-foreground" style={{ fontSize: "0.8125rem" }}>Edit</button>
               </div>
@@ -619,7 +667,7 @@ export default function SettingsPage() {
       {activeTab === "subjects" && (
         <div className="bg-card border border-border rounded-xl p-6 max-w-2xl">
           <div className="space-y-2">
-            {["Mathematics — Algebra, Calculus", "Science — Physics, Chemistry", "English — Literature, Grammar", "Social Studies — History, Geography", "Computer Science — Programming, Data Structures"].map(sub => (
+            {["Mathematics â€” Algebra, Calculus", "Science â€” Physics, Chemistry", "English â€” Literature, Grammar", "Social Studies â€” History, Geography", "Computer Science â€” Programming, Data Structures"].map(sub => (
               <div key={sub} className="flex items-center justify-between p-3 rounded-lg border border-border">
                 <span style={{ fontSize: "0.875rem" }}>{sub}</span><button className="text-muted-foreground hover:text-foreground" style={{ fontSize: "0.8125rem" }}>Edit</button>
               </div>
@@ -631,3 +679,7 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+
+
+

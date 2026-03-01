@@ -20,6 +20,13 @@ import RoomsPage from "./pages/rooms";
 import EquipmentPage from "./pages/equipment";
 import TicketsPage from "./pages/tickets";
 import NotFoundPage from "./pages/not-found";
+import SetupPage from "./pages/setup";
+import AcademicPage from "./pages/academic";
+import ClassesPage from "./pages/classes";
+import SubjectsPage from "./pages/subjects";
+import TimetableBuilderPage from "./pages/timetable-builder";
+import StudentDetailPage from "./pages/student-detail";
+import TeacherDetailPage from "./pages/teacher-detail";
 
 export const router = createBrowserRouter([
   {
@@ -34,7 +41,9 @@ export const router = createBrowserRouter([
       { path: "user-management", Component: UserManagementPage },
       { path: "roles-permissions", Component: RolesPermissionsPage },
       { path: "students", Component: StudentsPage },
+      { path: "students/:id", Component: StudentDetailPage },
       { path: "teachers", Component: TeachersPage },
+      { path: "teachers/:id", Component: TeacherDetailPage },
       { path: "attendance", Component: AttendancePage },
       { path: "assignments", Component: AssignmentsPage },
       { path: "gradebook", Component: GradebookPage },
@@ -48,6 +57,11 @@ export const router = createBrowserRouter([
       { path: "rooms", Component: RoomsPage },
       { path: "equipment", Component: EquipmentPage },
       { path: "tickets", Component: TicketsPage },
+      { path: "setup", Component: SetupPage },
+      { path: "academic", Component: AcademicPage },
+      { path: "classes", Component: ClassesPage },
+      { path: "subjects", Component: SubjectsPage },
+      { path: "timetable-builder", Component: TimetableBuilderPage },
       { path: "*", Component: NotFoundPage },
     ],
   },

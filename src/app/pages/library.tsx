@@ -1,5 +1,6 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useOutletContext } from "react-router";
+import { useAppSettings } from "../context/app-settings-context";
 import {
   BookOpen,
   Plus,
@@ -18,6 +19,7 @@ type Tab = "catalog" | "issued" | "overdue";
 
 export default function LibraryPage() {
   const { role } = useOutletContext<{ role: Role }>();
+  const { currency, libraryFinesEnabled } = useAppSettings();
   const [activeTab, setActiveTab] = useState<Tab>("catalog");
   const [showAddBook, setShowAddBook] = useState(false);
   const [showIssueBook, setShowIssueBook] = useState(false);
@@ -265,7 +267,7 @@ export default function LibraryPage() {
           label="Overdue"
           value={overdueCount}
           icon={<AlertTriangle className="w-5 h-5 text-muted-foreground" />}
-          change={`₹${totalFines} in fines`}
+                  change={libraryFinesEnabled ? `${currency.symbol}${totalFines} in fines` : undefined}
           changeType="negative"
         />
       </div>
@@ -368,12 +370,12 @@ export default function LibraryPage() {
                         >
                           Due: {issue.dueDate}
                         </span>
-                        <span
+                        {libraryFinesEnabled && (<span
                           className="text-red-600"
                           style={{ fontSize: "0.75rem", fontWeight: 500 }}
                         >
-                          Fine: ₹{issue.fine}
-                        </span>
+                                    Fine: {currency.symbol}{issue.fine}
+                        </span>)}
                       </div>
                     </div>
                   </div>
