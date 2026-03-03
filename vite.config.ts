@@ -24,7 +24,7 @@ export default defineConfig({
   // Allow hosting on any domain
   server: {
     host: "0.0.0.0",
-    allowedHosts: ".",
+    allowedHosts: "all",
   },
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
