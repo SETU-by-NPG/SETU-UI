@@ -1,46 +1,137 @@
 import { useState } from "react";
-import { Shield, Users, ChevronDown, ChevronRight, Check, X, Lock, Edit2, Plus } from "lucide-react";
-import { rolePermissions, type RolePermission } from "../data/mock-data";
+import { Shield, Users, ChevronDown, ChevronRight, Check, X, Lock, Edit2, Plus, Eye, EyeOff, UserCog, GraduationCap, User, BookOpen, Search, Filter } from "lucide-react";
+import { DEFAULT_PERMISSIONS } from "../data/permissions";
+import { systemUsers } from "../data/mock-data";
+import type { Role } from "../types";
 
-const allModules = [
-  "User Management", "Roles & Permissions", "Students", "Teachers", "Attendance",
-  "Assignments", "Gradebook", "Timetable", "Reports & Analytics", "Announcements",
-  "Messages", "Library", "IT Equipment", "Support Tickets", "Room Management",
-  "Audit Logs", "System Settings", "Data & Backups", "Integrations",
+// Standard roles configuration
+const STANDARD_ROLES: { id: Role; name: string; description: string; icon: React.ReactNode; color: string }[] = [
+  {
+    id: "admin",
+    name: "Administrator",
+    description: "Full system access with all permissions. Can manage users, settings, and configure the entire platform.",
+    icon: <Shield className="w-5 h-5" />,
+    color: "bg-purple-100 text-purple-700 border-purple-200",
+  },
+  {
+    id: "teacher",
+    name: "Teacher",
+    description: "Manages classes, assignments, grades, and attendance. Can view student records and communicate with parents.",
+    icon: <UserCog className="w-5 h-5" />,
+    color: "bg-blue-100 text-blue-700 border-blue-200",
+  },
+  {
+    id: "student",
+    name: "Student",
+    description: "Access to personal academic records, assignments, timetable, and school announcements.",
+    icon: <GraduationCap className="w-5 h-5" />,
+    color: "bg-green-100 text-green-700 border-green-200",
+  },
+  {
+    id: "parent",
+    name: "Parent",
+    description: "View-only access to children's academic progress, attendance, and school communications.",
+    icon: <User className="w-5 h-5" />,
+    color: "bg-amber-100 text-amber-700 border-amber-200",
+  },
+  {
+    id: "librarian",
+    name: "Librarian",
+    description: "Manages library resources, book loans, and reading materials. Can view student borrowing history.",
+    icon: <BookOpen className="w-5 h-5" />,
+    color: "bg-rose-100 text-rose-700 border-rose-200",
+  },
 ];
 
+// Permission categories for organization
+const PERMISSION_CATEGORIES = [
+  { key: "search", label: "Search & Discovery" },
+  { key: "view", label: "View Access" },
+  { key: "edit", label: "Edit & Modify" },
+  { key: "create", label: "Create & Add" },
+  { key: "delete", label: "Delete & Remove" },
+  { key: "export", label: "Export & Reports" },
+  { key: "manage", label: "Management" },
+];
+
+// Calculate permission counts for each role
+const getPermissionStats = (role: Role) => {
+  const allPerms = DEFAULT_PERMISSIONS;
+  const allowed = allPerms.filter(p => p.defaultAccess[role] === "allow").length;
+  const configurable = allPerms.filter(p => p.defaultAccess[role] === "config").length;
+  const denied = allPerms.filter(p => p.defaultAccess[role] === "deny").length;
+  return { allowed, configurable, denied, total: allPerms.length };
+};
+
+// Get user count for each role
+const getUserCount = (role: Role) => {
+  return systemUsers.filter(u => u.role === role).length;
+};
+
 export default function RolesPermissionsPage() {
-  const [expandedRole, setExpandedRole] = useState<string | null>("rp1");
-  const [editMode, setEditMode] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"standard" | "custom">("standard");
+  const [selectedRole, setSelectedRole] = useState<Role | null>("admin");
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(["search"]);
   const [showCreateRole, setShowCreateRole] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleDesc, setNewRoleDesc] = useState("");
-  const [newPerms, setNewPerms] = useState<Record<string, { read: boolean; write: boolean; delete: boolean; manage: boolean }>>(
-    allModules.reduce((a, m) => ({ ...a, [m]: { read: false, write: false, delete: false, manage: false } }), {})
-  );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editMode, setEditMode] = useState(false);
 
-  const toggleRole = (id: string) => {
-    setExpandedRole(expandedRole === id ? null : id);
-  };
-
-  const toggleNewPerm = (module: string, perm: "read" | "write" | "delete" | "manage") => {
-    setNewPerms(prev => ({
-      ...prev,
-      [module]: { ...prev[module], [perm]: !prev[module][perm] }
-    }));
+  const toggleCategory = (cat: string) => {
+    setExpandedCategories(prev =>
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
   };
 
   const handleCreateRole = () => {
-    // In a real app, this would POST to backend
     setShowCreateRole(false);
     setNewRoleName("");
     setNewRoleDesc("");
-    setNewPerms(allModules.reduce((a, m) => ({ ...a, [m]: { read: false, write: false, delete: false, manage: false } }), {}));
+  };
+
+  const selectedRoleConfig = STANDARD_ROLES.find(r => r.id === selectedRole);
+  const selectedRoleStats = selectedRole ? getPermissionStats(selectedRole) : null;
+
+  // Filter permissions by search and category
+  const filteredPermissions = DEFAULT_PERMISSIONS.filter(p => {
+    const matchesSearch = searchQuery === "" || 
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.module.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
+
+  const getPermissionIcon = (access: string) => {
+    switch (access) {
+      case "allow":
+        return <Check className="w-4 h-4 text-green-600" />;
+      case "deny":
+        return <X className="w-4 h-4 text-red-500" />;
+      case "config":
+        return <div className="w-4 h-4 rounded-full border-2 border-amber-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getPermissionLabel = (access: string) => {
+    switch (access) {
+      case "allow":
+        return "Allowed";
+      case "deny":
+        return "Denied";
+      case "config":
+        return "Configurable";
+      default:
+        return "Unknown";
+    }
   };
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1>Roles & Permissions</h1>
           <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
@@ -49,105 +140,316 @@ export default function RolesPermissionsPage() {
         </div>
         <button
           onClick={() => setShowCreateRole(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
           style={{ fontSize: "0.875rem" }}
         >
-          <Plus className="w-4 h-4" /> Create Role
+          <Plus className="w-4 h-4" /> Create Custom Role
         </button>
       </div>
 
-      {/* Role Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        {rolePermissions.map((role) => (
-          <div key={role.id} className="bg-card border border-border rounded-xl p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-primary" />
-              </div>
-              <div>
-                <p style={{ fontWeight: 500, fontSize: "0.875rem" }}>{role.roleName}</p>
-                <p className="text-muted-foreground flex items-center gap-1" style={{ fontSize: "0.75rem" }}>
-                  <Users className="w-3 h-3" /> {role.userCount} users
-                </p>
-              </div>
-            </div>
-            <p className="text-muted-foreground line-clamp-2" style={{ fontSize: "0.75rem" }}>{role.description}</p>
-          </div>
-        ))}
+      {/* Tab Navigation */}
+      <div className="flex gap-1 mb-6 p-1 bg-muted rounded-lg w-fit">
+        <button
+          onClick={() => setActiveTab("standard")}
+          className={`px-4 py-2 rounded-md transition-all ${
+            activeTab === "standard"
+              ? "bg-card shadow-sm text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          style={{ fontSize: "0.875rem", fontWeight: 500 }}
+        >
+          Standard Roles
+        </button>
+        <button
+          onClick={() => setActiveTab("custom")}
+          className={`px-4 py-2 rounded-md transition-all ${
+            activeTab === "custom"
+              ? "bg-card shadow-sm text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          style={{ fontSize: "0.875rem", fontWeight: 500 }}
+        >
+          Custom Roles
+        </button>
       </div>
 
-      {/* Permission Matrix */}
-      <div className="space-y-3">
-        {rolePermissions.map((role) => (
-          <div key={role.id} className="bg-card border border-border rounded-xl overflow-hidden">
-            <div
-              onClick={() => toggleRole(role.id)}
-              className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                {expandedRole === role.id ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-                <div className="text-left">
-                  <p style={{ fontWeight: 500 }}>{role.roleName}</p>
-                  <p className="text-muted-foreground" style={{ fontSize: "0.8125rem" }}>{role.description}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-muted-foreground" style={{ fontSize: "0.8125rem" }}>{role.userCount} users</span>
-                {role.roleName !== "Administrator" && (
-                  <button onClick={(e) => { e.stopPropagation(); setEditMode(editMode === role.id ? null : role.id); }} className="p-1.5 rounded-md hover:bg-muted">
-                    <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
-                  </button>
-                )}
-              </div>
-            </div>
+      {activeTab === "standard" ? (
+        <>
+          {/* Standard Roles Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+            {STANDARD_ROLES.map((role) => {
+              const stats = getPermissionStats(role.id);
+              const userCount = getUserCount(role.id);
+              const isSelected = selectedRole === role.id;
 
-            {expandedRole === role.id && (
-              <div className="border-t border-border">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border bg-muted/50">
-                        {["Module", "Read", "Write", "Delete", "Manage"].map(h => (
-                          <th key={h} className={`${h === "Module" ? "text-left" : "text-center"} px-4 py-3 text-muted-foreground`} style={{ fontSize: "0.75rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {role.permissions.map((perm) => (
-                        <tr key={perm.module} className="border-b border-border last:border-b-0 hover:bg-muted/30">
-                          <td className="px-4 py-3" style={{ fontSize: "0.875rem" }}>{perm.module}</td>
-                          <td className="px-4 py-3 text-center"><PermIcon enabled={perm.read} editable={editMode === role.id} /></td>
-                          <td className="px-4 py-3 text-center"><PermIcon enabled={perm.write} editable={editMode === role.id} /></td>
-                          <td className="px-4 py-3 text-center"><PermIcon enabled={perm.delete} editable={editMode === role.id} /></td>
-                          <td className="px-4 py-3 text-center"><PermIcon enabled={perm.manage} editable={editMode === role.id} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {editMode === role.id && (
-                  <div className="flex justify-end gap-3 p-4 border-t border-border bg-muted/30">
-                    <button onClick={() => setEditMode(null)} className="px-4 py-2 rounded-lg border border-border hover:bg-muted" style={{ fontSize: "0.875rem" }}>Cancel</button>
-                    <button onClick={() => setEditMode(null)} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90" style={{ fontSize: "0.875rem" }}>Save Changes</button>
+              return (
+                <div
+                  key={role.id}
+                  onClick={() => setSelectedRole(role.id)}
+                  className={`cursor-pointer border rounded-xl p-4 transition-all hover:shadow-md ${
+                    isSelected
+                      ? "border-primary ring-2 ring-primary/20 bg-primary/5"
+                      : "border-border bg-card hover:border-primary/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${role.color}`}>
+                      {role.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate" style={{ fontSize: "0.875rem" }}>
+                        {role.name}
+                      </p>
+                      <p className="text-muted-foreground flex items-center gap-1" style={{ fontSize: "0.75rem" }}>
+                        <Users className="w-3 h-3" /> {userCount} users
+                      </p>
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
+                  <p className="text-muted-foreground line-clamp-2 mb-3" style={{ fontSize: "0.75rem" }}>
+                    {role.description}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                      {stats.allowed} allowed
+                    </span>
+                    {stats.configurable > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                        {stats.configurable} config
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
 
-      {/* Security Note */}
-      <div className="mt-6 flex items-start gap-3 p-4 rounded-xl border border-amber-200 bg-amber-50">
-        <Lock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-amber-800" style={{ fontWeight: 500, fontSize: "0.875rem" }}>Administrator role is protected</p>
-          <p className="text-amber-700 mt-0.5" style={{ fontSize: "0.8125rem" }}>
-            The Administrator role has full system access and cannot be modified. To change admin privileges, contact the platform owner.
+          {/* Selected Role Details */}
+          {selectedRoleConfig && selectedRoleStats && (
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
+              {/* Role Header */}
+              <div className="p-4 border-b border-border bg-muted/30">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${selectedRoleConfig.color}`}>
+                      {selectedRoleConfig.icon}
+                    </div>
+                    <div>
+                      <h2 style={{ fontSize: "1.125rem", fontWeight: 600 }}>{selectedRoleConfig.name}</h2>
+                      <p className="text-muted-foreground" style={{ fontSize: "0.8125rem" }}>
+                        {selectedRoleConfig.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>Permissions</p>
+                      <p style={{ fontSize: "0.875rem", fontWeight: 500 }}>
+                        {selectedRoleStats.allowed} / {selectedRoleStats.total}
+                      </p>
+                    </div>
+                    {selectedRole !== "admin" && (
+                      <button
+                        onClick={() => setEditMode(!editMode)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
+                          editMode
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "border-border hover:bg-muted"
+                        }`}
+                        style={{ fontSize: "0.8125rem" }}
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        {editMode ? "Done" : "Edit"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Permission Stats Bar */}
+              <div className="flex items-center gap-6 px-4 py-3 border-b border-border bg-muted/10">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <span style={{ fontSize: "0.8125rem" }}>
+                    <strong>{selectedRoleStats.allowed}</strong> Allowed
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
+                  <span style={{ fontSize: "0.8125rem" }}>
+                    <strong>{selectedRoleStats.configurable}</strong> Configurable
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <span style={{ fontSize: "0.8125rem" }}>
+                    <strong>{selectedRoleStats.denied}</strong> Denied
+                  </span>
+                </div>
+              </div>
+
+              {/* Search & Filter */}
+              <div className="p-4 border-b border-border">
+                <div className="relative max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search permissions..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-input-background"
+                    style={{ fontSize: "0.875rem" }}
+                  />
+                </div>
+              </div>
+
+              {/* Permission Matrix */}
+              <div className="divide-y divide-border">
+                {PERMISSION_CATEGORIES.map((category) => {
+                  const categoryPermissions = filteredPermissions.filter(
+                    p => p.category === category.key
+                  );
+                  if (categoryPermissions.length === 0) return null;
+
+                  const isExpanded = expandedCategories.includes(category.key);
+
+                  return (
+                    <div key={category.key}>
+                      <button
+                        onClick={() => toggleCategory(category.key)}
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          {isExpanded ? (
+                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          )}
+                          <span style={{ fontSize: "0.875rem", fontWeight: 500 }}>
+                            {category.label}
+                          </span>
+                          <span className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>
+                            ({categoryPermissions.length} permissions)
+                          </span>
+                        </div>
+                      </button>
+
+                      {isExpanded && (
+                        <div className="border-t border-border">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-border bg-muted/30">
+                                <th className="text-left px-4 py-2 text-muted-foreground" style={{ fontSize: "0.75rem", fontWeight: 500 }}>
+                                  Permission
+                                </th>
+                                <th className="text-left px-4 py-2 text-muted-foreground" style={{ fontSize: "0.75rem", fontWeight: 500 }}>
+                                  Module
+                                </th>
+                                <th className="text-center px-4 py-2 text-muted-foreground" style={{ fontSize: "0.75rem", fontWeight: 500 }}>
+                                  Access
+                                </th>
+                                {editMode && selectedRole !== "admin" && (
+                                  <th className="text-center px-4 py-2 text-muted-foreground" style={{ fontSize: "0.75rem", fontWeight: 500 }}>
+                                    Action
+                                  </th>
+                                )}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {categoryPermissions.map((perm) => {
+                                const access = perm.defaultAccess[selectedRole!];
+                                return (
+                                  <tr key={perm.id} className="border-b border-border last:border-b-0 hover:bg-muted/20">
+                                    <td className="px-4 py-2.5">
+                                      <p style={{ fontSize: "0.8125rem", fontWeight: 500 }}>{perm.name}</p>
+                                      <p className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>
+                                        {perm.description}
+                                      </p>
+                                    </td>
+                                    <td className="px-4 py-2.5">
+                                      <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground" style={{ fontSize: "0.75rem" }}>
+                                        {perm.module}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-2.5 text-center">
+                                      <div className="flex items-center justify-center gap-2">
+                                        {getPermissionIcon(access)}
+                                        <span style={{ fontSize: "0.75rem" }}>{getPermissionLabel(access)}</span>
+                                      </div>
+                                    </td>
+                                    {editMode && selectedRole !== "admin" && (
+                                      <td className="px-4 py-2.5 text-center">
+                                        {perm.isConfigurable ? (
+                                          <select
+                                            className="px-2 py-1 rounded border border-border bg-input-background"
+                                            style={{ fontSize: "0.75rem" }}
+                                            defaultValue={access}
+                                          >
+                                            <option value="allow">Allow</option>
+                                            <option value="deny">Deny</option>
+                                          </select>
+                                        ) : (
+                                          <span className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>
+                                            Fixed
+                                          </span>
+                                        )}
+                                      </td>
+                                    )}
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {filteredPermissions.length === 0 && (
+                <div className="p-8 text-center text-muted-foreground" style={{ fontSize: "0.875rem" }}>
+                  No permissions found matching your search.
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      ) : (
+        /* Custom Roles Tab */
+        <div className="bg-card border border-border rounded-xl p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <Shield className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h3 style={{ fontSize: "1rem", fontWeight: 500 }} className="mb-2">
+            No Custom Roles Yet
+          </h3>
+          <p className="text-muted-foreground mb-4 max-w-md mx-auto" style={{ fontSize: "0.875rem" }}>
+            Create custom roles to define specific permission sets for unique positions in your organization.
           </p>
+          <button
+            onClick={() => setShowCreateRole(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground mx-auto"
+            style={{ fontSize: "0.875rem" }}
+          >
+            <Plus className="w-4 h-4" /> Create First Custom Role
+          </button>
         </div>
-      </div>
+      )}
+
+      {/* Admin Notice */}
+      {selectedRole === "admin" && (
+        <div className="mt-6 flex items-start gap-3 p-4 rounded-xl border border-amber-200 bg-amber-50">
+          <Lock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-amber-800" style={{ fontWeight: 500, fontSize: "0.875rem" }}>
+              Administrator role is protected
+            </p>
+            <p className="text-amber-700 mt-0.5" style={{ fontSize: "0.8125rem" }}>
+              The Administrator role has full system access and cannot be modified. This ensures system stability and security.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Create Role Modal */}
       {showCreateRole && (
@@ -156,22 +458,34 @@ export default function RolesPermissionsPage() {
             <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
               <div>
                 <h2>Create New Role</h2>
-                <p className="text-muted-foreground mt-1" style={{ fontSize: "0.8125rem" }}>Define a custom role with specific permissions.</p>
+                <p className="text-muted-foreground mt-1" style={{ fontSize: "0.8125rem" }}>
+                  Define a custom role with specific permissions.
+                </p>
               </div>
-              <button onClick={() => setShowCreateRole(false)} className="p-1 rounded-md hover:bg-muted"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowCreateRole(false)} className="p-1 rounded-md hover:bg-muted">
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label style={{ fontSize: "0.875rem" }}>Role Name *</label>
-                  <input type="text" value={newRoleName} onChange={(e) => setNewRoleName(e.target.value)} placeholder="e.g., Lab Assistant" className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-input-background" style={{ fontSize: "0.875rem" }} />
+                  <input
+                    type="text"
+                    value={newRoleName}
+                    onChange={(e) => setNewRoleName(e.target.value)}
+                    placeholder="e.g., Lab Assistant"
+                    className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-input-background"
+                    style={{ fontSize: "0.875rem" }}
+                  />
                 </div>
                 <div>
                   <label style={{ fontSize: "0.875rem" }}>Based on</label>
                   <select className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-input-background" style={{ fontSize: "0.875rem" }}>
                     <option value="">Start from scratch</option>
                     <option value="teacher">Copy from Teacher</option>
+                    <option value="librarian">Copy from Librarian</option>
                     <option value="student">Copy from Student</option>
                     <option value="parent">Copy from Parent</option>
                   </select>
@@ -179,53 +493,35 @@ export default function RolesPermissionsPage() {
               </div>
               <div>
                 <label style={{ fontSize: "0.875rem" }}>Description</label>
-                <input type="text" value={newRoleDesc} onChange={(e) => setNewRoleDesc(e.target.value)} placeholder="What can this role do?" className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-input-background" style={{ fontSize: "0.875rem" }} />
+                <input
+                  type="text"
+                  value={newRoleDesc}
+                  onChange={(e) => setNewRoleDesc(e.target.value)}
+                  placeholder="What can this role do?"
+                  className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-input-background"
+                  style={{ fontSize: "0.875rem" }}
+                />
               </div>
 
-              <div>
-                <h3 className="mb-3">Permissions</h3>
-                <div className="border border-border rounded-xl overflow-hidden">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border bg-muted/50">
-                        <th className="text-left px-4 py-2.5 text-muted-foreground" style={{ fontSize: "0.75rem", fontWeight: 500, textTransform: "uppercase" }}>Module</th>
-                        {["Read", "Write", "Delete", "Manage"].map(h => (
-                          <th key={h} className="text-center px-3 py-2.5 text-muted-foreground" style={{ fontSize: "0.75rem", fontWeight: 500, textTransform: "uppercase" }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {allModules.map((mod) => (
-                        <tr key={mod} className="border-b border-border last:border-b-0 hover:bg-muted/30">
-                          <td className="px-4 py-2.5" style={{ fontSize: "0.8125rem" }}>{mod}</td>
-                          {(["read", "write", "delete", "manage"] as const).map((p) => (
-                            <td key={p} className="px-3 py-2.5 text-center">
-                              <button
-                                onClick={() => toggleNewPerm(mod, p)}
-                                className={`inline-flex items-center justify-center w-7 h-7 rounded-md border transition-colors ${
-                                  newPerms[mod]?.[p]
-                                    ? "bg-green-50 border-green-200 text-green-600 hover:bg-green-100"
-                                    : "bg-muted border-border text-muted-foreground hover:bg-muted/80"
-                                }`}
-                              >
-                                {newPerms[mod]?.[p] ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                              </button>
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
+                <p className="text-amber-800" style={{ fontSize: "0.8125rem" }}>
+                  <strong>Note:</strong> After creating the role, you'll be able to configure specific permissions in the permission matrix above.
+                </p>
               </div>
             </div>
 
             <div className="flex justify-end gap-3 p-6 border-t border-border shrink-0">
-              <button onClick={() => setShowCreateRole(false)} className="px-4 py-2 rounded-lg border border-border hover:bg-muted" style={{ fontSize: "0.875rem" }}>Cancel</button>
+              <button
+                onClick={() => setShowCreateRole(false)}
+                className="px-4 py-2 rounded-lg border border-border hover:bg-muted"
+                style={{ fontSize: "0.875rem" }}
+              >
+                Cancel
+              </button>
               <button
                 onClick={handleCreateRole}
                 disabled={!newRoleName.trim()}
-                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ fontSize: "0.875rem" }}
               >
                 Create Role
@@ -235,22 +531,5 @@ export default function RolesPermissionsPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function PermIcon({ enabled, editable }: { enabled: boolean; editable: boolean }) {
-  if (editable) {
-    return (
-      <button className={`inline-flex items-center justify-center w-7 h-7 rounded-md border transition-colors ${
-        enabled ? "bg-green-50 border-green-200 text-green-600 hover:bg-green-100" : "bg-muted border-border text-muted-foreground hover:bg-muted/80"
-      }`}>
-        {enabled ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-      </button>
-    );
-  }
-  return enabled ? (
-    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-50 text-green-600"><Check className="w-3.5 h-3.5" /></span>
-  ) : (
-    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground/40"><X className="w-3.5 h-3.5" /></span>
   );
 }

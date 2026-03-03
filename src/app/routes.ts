@@ -27,6 +27,7 @@ import SubjectsPage from "./pages/subjects";
 import TimetableBuilderPage from "./pages/timetable-builder";
 import StudentDetailPage from "./pages/student-detail";
 import TeacherDetailPage from "./pages/teacher-detail";
+import CommunicationRestrictionsDemoPage from "./pages/communication-restrictions-demo";
 
 export const router = createBrowserRouter([
   {
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
       { path: "classes", Component: ClassesPage },
       { path: "subjects", Component: SubjectsPage },
       { path: "timetable-builder", Component: TimetableBuilderPage },
+      { path: "communication-restrictions-demo", Component: CommunicationRestrictionsDemoPage },
       { path: "*", Component: NotFoundPage },
     ],
   },

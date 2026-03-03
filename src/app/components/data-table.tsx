@@ -14,6 +14,8 @@ interface DataTableProps<T> {
   searchKey?: (item: T) => string;
   searchPlaceholder?: string;
   pageSize?: number;
+  onPageSizeChange?: (pageSize: number) => void;
+  pageSizeOptions?: number[];
   actions?: ReactNode;
   emptyState?: ReactNode;
 }
@@ -23,12 +25,18 @@ export function DataTable<T extends { id?: string }>({
   columns,
   searchKey,
   searchPlaceholder = "Search...",
-  pageSize = 10,
+  pageSize: controlledPageSize,
+  onPageSizeChange,
+  pageSizeOptions = [10, 25, 50, 100],
   actions,
   emptyState,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [internalPageSize, setInternalPageSize] = useState(10);
+
+  // Use controlled page size if provided, otherwise use internal state
+  const pageSize = controlledPageSize ?? internalPageSize;
 
   const filtered = searchKey
     ? data.filter((item) => searchKey(item).toLowerCase().includes(search.toLowerCase()))
@@ -105,11 +113,35 @@ export function DataTable<T extends { id?: string }>({
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
-            Showing {page * pageSize + 1}-{Math.min((page + 1) * pageSize, filtered.length)} of {filtered.length}
-          </p>
+      {(totalPages > 1 || filtered.length > 10) && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-4 gap-3">
+          <div className="flex items-center gap-3">
+            <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
+              Showing {filtered.length > 0 ? page * pageSize + 1 : 0}-{Math.min((page + 1) * pageSize, filtered.length)} of {filtered.length}
+            </p>
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <label className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>Rows:</label>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  const newPageSize = Number(e.target.value);
+                  if (onPageSizeChange) {
+                    onPageSizeChange(newPageSize);
+                  } else {
+                    setInternalPageSize(newPageSize);
+                  }
+                  setPage(0); // Reset to first page when changing page size
+                }}
+                className="px-2 py-1 rounded-md border border-border bg-input-background text-foreground"
+                style={{ fontSize: "0.75rem" }}
+              >
+                {pageSizeOptions.map((size) => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div className="flex gap-1">
             <button
               disabled={page === 0}

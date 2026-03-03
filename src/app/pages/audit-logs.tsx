@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Download, Filter, Search, AlertTriangle, Info, AlertOctagon, Clock } from "lucide-react";
-import { auditLogs, type AuditLogEntry } from "../data/mock-data";
+import { auditLogs } from "../data/mock-data";
 
 const severityFilters = ["All", "info", "warning", "critical"] as const;
 const moduleFilters = ["All", "Authentication", "User Management", "Security", "System Settings", "Data Management", "Platform", "Gradebook", "Attendance", "Integrations", "Roles & Permissions"] as const;
 
-const severityConfig = {
+const severityConfig: Record<string, { icon: React.ReactNode; color: string; dot: string }> = {
   info: { icon: <Info className="w-3.5 h-3.5" />, color: "bg-blue-50 text-blue-600 border-blue-200", dot: "bg-blue-500" },
   warning: { icon: <AlertTriangle className="w-3.5 h-3.5" />, color: "bg-amber-50 text-amber-600 border-amber-200", dot: "bg-amber-500" },
   critical: { icon: <AlertOctagon className="w-3.5 h-3.5" />, color: "bg-red-50 text-red-600 border-red-200", dot: "bg-red-500" },
@@ -17,16 +17,25 @@ export default function AuditLogsPage() {
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  const filtered = auditLogs.filter(log => {
+  // Map audit logs to expected format with fallbacks for missing properties
+  const mappedLogs = auditLogs.map(log => ({
+    ...log,
+    severity: (log as {severity?: string}).severity || "info",
+    user: (log as {user?: string}).user || log.userId || "Unknown",
+    module: (log as {module?: string}).module || log.entityType || "System",
+    details: (log as {details?: string}).details || `${log.action} ${log.entityType} (${log.entityId})`,
+  }));
+
+  const filtered = mappedLogs.filter(log => {
     if (severityFilter !== "All" && log.severity !== severityFilter) return false;
     if (moduleFilter !== "All" && log.module !== moduleFilter) return false;
     if (search) {
       const s = search.toLowerCase();
       return (
-        log.user.toLowerCase().includes(s) ||
-        log.action.toLowerCase().includes(s) ||
-        log.details.toLowerCase().includes(s) ||
-        log.module.toLowerCase().includes(s)
+        log.user?.toLowerCase().includes(s) ||
+        log.action?.toLowerCase().includes(s) ||
+        log.details?.toLowerCase().includes(s) ||
+        log.module?.toLowerCase().includes(s)
       );
     }
     return true;
@@ -34,9 +43,9 @@ export default function AuditLogsPage() {
 
   const stats = {
     total: auditLogs.length,
-    info: auditLogs.filter(l => l.severity === "info").length,
-    warning: auditLogs.filter(l => l.severity === "warning").length,
-    critical: auditLogs.filter(l => l.severity === "critical").length,
+    info: mappedLogs.filter(l => l.severity === "info").length,
+    warning: mappedLogs.filter(l => l.severity === "warning").length,
+    critical: mappedLogs.filter(l => l.severity === "critical").length,
   };
 
   return (
@@ -158,11 +167,11 @@ export default function AuditLogsPage() {
                 </tr>
               ) : (
                 filtered.map((log) => {
-                  const config = severityConfig[log.severity];
+                  const config = severityConfig[log.severity] || severityConfig.info;
                   return (
                     <tr key={log.id} className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3">
-                        <span className={`w-2 h-2 rounded-full inline-block ${config.dot}`} />
+                        <span className={`w-2 h-2 rounded-full inline-block ${config?.dot || 'bg-gray-500'}`} />
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-1.5 text-muted-foreground">

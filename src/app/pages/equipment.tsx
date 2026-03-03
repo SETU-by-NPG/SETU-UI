@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useOutletContext } from "react-router";
 import { Monitor, Search, Plus, Calendar, X, CheckCircle } from "lucide-react";
 import { StatusBadge } from "../components/status-badge";
-import { equipment, equipmentBookings, type Role } from "../data/mock-data";
+import { equipment, equipmentBookings } from "../data/mock-data";
 
 const conditionColors: Record<string, string> = {
   excellent: "text-green-600",
@@ -12,7 +12,7 @@ const conditionColors: Record<string, string> = {
 };
 
 export default function EquipmentPage() {
-  const { role } = useOutletContext<{ role: Role }>();
+  const { role } = useOutletContext<{ role: string }>();
   const [tab, setTab] = useState<"inventory" | "bookings">(role === "teacher" ? "bookings" : "inventory");
   const [search, setSearch] = useState("");
   const [showBooking, setShowBooking] = useState(false);
@@ -21,13 +21,13 @@ export default function EquipmentPage() {
   const categories = [...new Set(equipment.map((e) => e.category))];
 
   const filteredEquipment = equipment.filter((e) => {
-    const matchSearch = e.name.toLowerCase().includes(search.toLowerCase()) || e.serialNumber.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = e.name?.toLowerCase().includes(search.toLowerCase()) || e.serialNumber?.toLowerCase().includes(search.toLowerCase());
     const matchCat = filterCat === "all" || e.category === filterCat;
     return matchSearch && matchCat;
   });
 
   const filteredBookings = equipmentBookings.filter((b) =>
-    b.equipmentName.toLowerCase().includes(search.toLowerCase()) || b.bookedBy.toLowerCase().includes(search.toLowerCase())
+    b.equipment?.toLowerCase().includes(search.toLowerCase()) || b.bookedBy?.toLowerCase().includes(search.toLowerCase())
   );
 
   const availableCount = equipment.filter((e) => e.available).length;
@@ -113,7 +113,7 @@ export default function EquipmentPage() {
                     <td className="px-4 py-3" style={{ fontSize: "0.875rem", fontWeight: 500 }}>{eq.name}</td>
                     <td className="px-4 py-3 text-muted-foreground" style={{ fontSize: "0.875rem" }}>{eq.category}</td>
                     <td className="px-4 py-3 font-mono text-muted-foreground" style={{ fontSize: "0.75rem" }}>{eq.serialNumber}</td>
-                    <td className="px-4 py-3 text-muted-foreground" style={{ fontSize: "0.875rem" }}>{eq.location}</td>
+                    <td className="px-4 py-3 text-muted-foreground" style={{ fontSize: "0.875rem" }}>{(eq as {location?: string}).location || "-"}</td>
                     <td className="px-4 py-3">
                       <span className={`capitalize ${conditionColors[eq.condition]}`} style={{ fontSize: "0.8125rem" }}>{eq.condition.replace("-", " ")}</span>
                     </td>
@@ -140,13 +140,12 @@ export default function EquipmentPage() {
                   <Monitor className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <div>
-                  <p style={{ fontWeight: 500, fontSize: "0.875rem" }}>{b.equipmentName}</p>
-                  <p className="text-muted-foreground" style={{ fontSize: "0.8125rem" }}>{b.bookedBy} &middot; {b.bookedByRole}</p>
+                  <p style={{ fontWeight: 500, fontSize: "0.875rem" }}>{b.equipment}</p>
+                  <p className="text-muted-foreground" style={{ fontSize: "0.8125rem" }}>{b.bookedBy}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Calendar className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>{b.date} &middot; {b.timeSlot}</span>
+                    <span className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>{b.date} &middot; {b.time}</span>
                   </div>
-                  <p className="text-muted-foreground mt-0.5" style={{ fontSize: "0.75rem" }}>{b.purpose}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 sm:shrink-0">

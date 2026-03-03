@@ -121,7 +121,7 @@ export default function RoomsPage() {
               </span>
             </div>
             <div className="flex flex-wrap gap-1">
-              {room.equipment.map((eq) => (
+              {Array.isArray(room.equipment) && room.equipment.map((eq) => (
                 <span key={eq} className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground" style={{ fontSize: "0.625rem" }}>
                   {eq}
                 </span>

@@ -1,608 +1,1107 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router";
 import {
-  Users, Plus, Trash2, Save, Loader2, ChevronLeft, ChevronRight,
-  Check, X, Edit2, Copy, GraduationCap, MoreVertical, Archive
+  Plus, Trash2, Save, Loader2, Check, Edit2, ChevronRight, FolderOpen,
+  GraduationCap, Users, MoreHorizontal, ChevronDown, ChevronUp,
+  LayoutGrid, ListTree, Search, Filter, School, BookOpen
 } from "lucide-react";
-import { type Role } from "../data/mock-data";
+import type { Role } from "../types";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { cn } from "../components/ui/utils";
 
-// Types
-interface Section {
-  id: number;
+// Types for nested structure
+interface Subgroup {
+  id: string;
   name: string;
-  capacity: number;
-  enrolled: number;
+  description?: string;
+  studentCount: number;
+}
+
+interface Section {
+  id: string;
+  name: string;
+  description?: string;
+  studentCount: number;
+  subgroups: Subgroup[];
 }
 
 interface ClassGrade {
-  id: number;
+  id: string;
   name: string;
   level: number;
-  sections: Section[];
   description: string;
+  studentCount: number;
+  sections: Section[];
+  status: "active" | "inactive";
 }
 
-// Sample data
+// Sample data with nested structure
 const sampleClasses: ClassGrade[] = [
   {
-    id: 1,
+    id: "cg-001",
     name: "Grade 1",
     level: 1,
-    description: "Primary Year 1 - Foundation",
+    description: "Primary Year 1 - Foundation Stage",
+    studentCount: 53,
+    status: "active",
     sections: [
-      { id: 1, name: "Section A", capacity: 30, enrolled: 28 },
-      { id: 2, name: "Section B", capacity: 30, enrolled: 25 },
+      {
+        id: "sec-001",
+        name: "Section A",
+        description: "Primary group",
+        studentCount: 28,
+        subgroups: [
+          { id: "sg-001", name: "Red Group", description: "Morning sessions", studentCount: 14 },
+          { id: "sg-002", name: "Blue Group", description: "Afternoon sessions", studentCount: 14 },
+        ],
+      },
+      {
+        id: "sec-002",
+        name: "Section B",
+        description: "Secondary group",
+        studentCount: 25,
+        subgroups: [
+          { id: "sg-003", name: "Green Group", description: "Morning sessions", studentCount: 13 },
+          { id: "sg-004", name: "Yellow Group", description: "Afternoon sessions", studentCount: 12 },
+        ],
+      },
     ],
   },
   {
-    id: 2,
+    id: "cg-002",
     name: "Grade 2",
     level: 2,
     description: "Primary Year 2",
+    studentCount: 71,
+    status: "active",
     sections: [
-      { id: 1, name: "Section A", capacity: 30, enrolled: 27 },
-      { id: 2, name: "Section B", capacity: 30, enrolled: 24 },
-      { id: 3, name: "Section C", capacity: 30, enrolled: 20 },
+      {
+        id: "sec-003",
+        name: "Section A",
+        description: "Standard track",
+        studentCount: 24,
+        subgroups: [],
+      },
+      {
+        id: "sec-004",
+        name: "Section B",
+        description: "Standard track",
+        studentCount: 22,
+        subgroups: [],
+      },
+      {
+        id: "sec-005",
+        name: "Section C",
+        description: "Advanced track",
+        studentCount: 25,
+        subgroups: [
+          { id: "sg-005", name: "Alpha Group", description: "Advanced learners", studentCount: 12 },
+          { id: "sg-006", name: "Beta Group", description: "Advanced learners", studentCount: 13 },
+        ],
+      },
     ],
   },
   {
-    id: 3,
+    id: "cg-003",
     name: "Grade 3",
     level: 3,
     description: "Primary Year 3",
+    studentCount: 55,
+    status: "active",
     sections: [
-      { id: 1, name: "Section A", capacity: 30, enrolled: 29 },
-      { id: 2, name: "Section B", capacity: 30, enrolled: 26 },
+      {
+        id: "sec-006",
+        name: "Section A",
+        description: "Main stream",
+        studentCount: 29,
+        subgroups: [],
+      },
+      {
+        id: "sec-007",
+        name: "Section B",
+        description: "Main stream",
+        studentCount: 26,
+        subgroups: [],
+      },
     ],
   },
   {
-    id: 4,
+    id: "cg-009",
     name: "Grade 9",
     level: 9,
     description: "High School Year 9 - Secondary",
+    studentCount: 62,
+    status: "active",
     sections: [
-      { id: 1, name: "Section A - Science", capacity: 35, enrolled: 32 },
-      { id: 2, name: "Section B - Commerce", capacity: 35, enrolled: 30 },
+      {
+        id: "sec-008",
+        name: "Science Stream",
+        description: "Science-focused curriculum",
+        studentCount: 32,
+        subgroups: [
+          { id: "sg-007", name: "Physics Group", description: "Physics emphasis", studentCount: 16 },
+          { id: "sg-008", name: "Biology Group", description: "Biology emphasis", studentCount: 16 },
+        ],
+      },
+      {
+        id: "sec-009",
+        name: "Commerce Stream",
+        description: "Business-focused curriculum",
+        studentCount: 30,
+        subgroups: [
+          { id: "sg-009", name: "Accounting Group", description: "Accounting track", studentCount: 15 },
+          { id: "sg-010", name: "Economics Group", description: "Economics track", studentCount: 15 },
+        ],
+      },
     ],
   },
   {
-    id: 5,
+    id: "cg-010",
     name: "Grade 10",
     level: 10,
     description: "High School Year 10 - Secondary",
+    studentCount: 33,
+    status: "active",
     sections: [
-      { id: 1, name: "Section A", capacity: 35, enrolled: 33 },
+      {
+        id: "sec-010",
+        name: "Section A",
+        description: "Comprehensive",
+        studentCount: 33,
+        subgroups: [],
+      },
     ],
   },
   {
-    id: 6,
+    id: "cg-011",
     name: "Grade 11",
     level: 11,
     description: "High School Year 11 - Pre-University",
+    studentCount: 53,
+    status: "active",
     sections: [
-      { id: 1, name: "Science Stream", capacity: 30, enrolled: 28 },
-      { id: 2, name: "Commerce Stream", capacity: 30, enrolled: 25 },
+      {
+        id: "sec-011",
+        name: "Science Stream",
+        description: "Pre-medical/Pre-engineering",
+        studentCount: 28,
+        subgroups: [
+          { id: "sg-011", name: "Pre-Medical", description: "Medical track", studentCount: 14 },
+          { id: "sg-012", name: "Pre-Engineering", description: "Engineering track", studentCount: 14 },
+        ],
+      },
+      {
+        id: "sec-012",
+        name: "Commerce Stream",
+        description: "Business studies",
+        studentCount: 25,
+        subgroups: [
+          { id: "sg-013", name: "Business Group", description: "Business track", studentCount: 13 },
+          { id: "sg-014", name: "Accounting Group", description: "Accounting track", studentCount: 12 },
+        ],
+      },
     ],
   },
   {
-    id: 7,
+    id: "cg-012",
     name: "Grade 12",
     level: 12,
     description: "High School Year 12 - Final Year",
+    studentCount: 58,
+    status: "active",
     sections: [
-      { id: 1, name: "Science Stream", capacity: 30, enrolled: 30 },
-      { id: 2, name: "Commerce Stream", capacity: 30, enrolled: 28 },
+      {
+        id: "sec-013",
+        name: "Science Stream",
+        description: "Final year science",
+        studentCount: 30,
+        subgroups: [
+          { id: "sg-015", name: "Medical", description: "Medical final year", studentCount: 15 },
+          { id: "sg-016", name: "Engineering", description: "Engineering final year", studentCount: 15 },
+        ],
+      },
+      {
+        id: "sec-014",
+        name: "Commerce Stream",
+        description: "Final year commerce",
+        studentCount: 28,
+        subgroups: [
+          { id: "sg-017", name: "Business", description: "Business final year", studentCount: 14 },
+          { id: "sg-018", name: "Accounting", description: "Accounting final year", studentCount: 14 },
+        ],
+      },
     ],
   },
 ];
 
+// Utility functions
+const getLevelColor = (level: number) => {
+  if (level <= 3) return "bg-green-100 text-green-700 border-green-200";
+  if (level <= 6) return "bg-blue-100 text-blue-700 border-blue-200";
+  if (level <= 9) return "bg-purple-100 text-purple-700 border-purple-200";
+  return "bg-amber-100 text-amber-700 border-amber-200";
+};
+
+const getLevelLabel = (level: number) => {
+  if (level <= 3) return "Primary";
+  if (level <= 6) return "Elementary";
+  if (level <= 9) return "Middle";
+  return "High School";
+};
+
 export default function ClassesPage() {
   const { role } = useOutletContext<{ role: Role }>();
   const [classes, setClasses] = useState<ClassGrade[]>(sampleClasses);
-  const [selectedClass, setSelectedClass] = useState<ClassGrade | null>(classes[0]);
-  const [loading, setLoading] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  
-  // New class modal
-  const [showNewClass, setShowNewClass] = useState(false);
-  const [newClass, setNewClass] = useState({
+  const [selectedClassId, setSelectedClassId] = useState<string>(sampleClasses[0].id);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<"tree" | "list">("tree");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterLevel, setFilterLevel] = useState<"all" | "primary" | "middle" | "high">("all");
+
+  // Loading states
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSavedToast, setShowSavedToast] = useState(false);
+
+  // Modal states
+  const [showClassModal, setShowClassModal] = useState(false);
+  const [showSectionModal, setShowSectionModal] = useState(false);
+  const [showSubgroupModal, setShowSubgroupModal] = useState(false);
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  const [editingSubgroup, setEditingSubgroup] = useState<{ sectionId: string; subgroup: Subgroup } | null>(null);
+
+  // Form states
+  const [newClassForm, setNewClassForm] = useState({
     name: "",
-    level: 0,
+    level: 1,
+    description: "",
+  });
+  const [newSectionForm, setNewSectionForm] = useState({
+    name: "",
+    description: "",
+  });
+  const [newSubgroupForm, setNewSubgroupForm] = useState({
+    name: "",
     description: "",
   });
 
-  const [showNewSection, setShowNewSection] = useState(false);
-  const [newSection, setNewSection] = useState({
-    name: "",
-    capacity: 30,
-  });
+  const selectedClass = classes.find((c) => c.id === selectedClassId);
 
-  const handleSave = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setSaved(true);
-      setIsEditing(false);
-      setTimeout(() => setSaved(false), 2000);
-    }, 1000);
+  // Toggle section expansion
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+      return next;
+    });
   };
 
-  const addClass = () => {
-    if (!newClass.name || newClass.level === 0) return;
-    
-    const classGrade: ClassGrade = {
-      id: Date.now(),
-      name: newClass.name,
-      level: newClass.level,
-      description: newClass.description,
-      sections: [],
-    };
-    
-    setClasses([...classes, classGrade].sort((a, b) => a.level - b.level));
-    setSelectedClass(classGrade);
-    setShowNewClass(false);
-    setNewClass({ name: "", level: 0, description: "" });
-  };
-
-  const deleteClass = (classId: number) => {
-    setClasses(classes.filter((c) => c.id !== classId));
-    if (selectedClass?.id === classId) {
-      setSelectedClass(classes[0] || null);
+  // Expand all sections
+  const expandAll = () => {
+    if (selectedClass) {
+      setExpandedSections(new Set(selectedClass.sections.map((s) => s.id)));
     }
   };
 
-  const addSection = () => {
-    if (!selectedClass || !newSection.name) return;
-    
-    const section: Section = {
-      id: Date.now(),
-      name: newSection.name,
-      capacity: newSection.capacity,
-      enrolled: 0,
+  // Collapse all sections
+  const collapseAll = () => {
+    setExpandedSections(new Set());
+  };
+
+  // Save handler
+  const handleSave = async () => {
+    setIsSaving(true);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    setIsSaving(false);
+    setShowSavedToast(true);
+    setTimeout(() => setShowSavedToast(false), 2000);
+  };
+
+  // Add class
+  const handleAddClass = () => {
+    if (!newClassForm.name) return;
+
+    const newClass: ClassGrade = {
+      id: `cg-${Date.now()}`,
+      name: newClassForm.name,
+      level: newClassForm.level,
+      description: newClassForm.description,
+      studentCount: 0,
+      status: "active",
+      sections: [],
     };
-    
-    setClasses(
-      classes.map((c) =>
-        c.id === selectedClass.id
-          ? { ...c, sections: [...c.sections, section] }
-          : c
-      )
+
+    setClasses([...classes, newClass].sort((a, b) => a.level - b.level));
+    setSelectedClassId(newClass.id);
+    setShowClassModal(false);
+    setNewClassForm({ name: "", level: 1, description: "" });
+  };
+
+  // Delete class
+  const handleDeleteClass = (classId: string) => {
+    const updated = classes.filter((c) => c.id !== classId);
+    setClasses(updated);
+    if (selectedClassId === classId && updated.length > 0) {
+      setSelectedClassId(updated[0].id);
+    }
+  };
+
+  // Add section
+  const handleAddSection = () => {
+    if (!selectedClass || !newSectionForm.name) return;
+
+    const newSection: Section = {
+      id: `sec-${Date.now()}`,
+      name: newSectionForm.name,
+      description: newSectionForm.description,
+      studentCount: 0,
+      subgroups: [],
+    };
+
+    const updatedClasses = classes.map((c) =>
+      c.id === selectedClass.id
+        ? { ...c, sections: [...c.sections, newSection] }
+        : c
     );
-    setSelectedClass({
-      ...selectedClass,
-      sections: [...selectedClass.sections, section],
+
+    setClasses(updatedClasses);
+    setShowSectionModal(false);
+    setNewSectionForm({ name: "", description: "" });
+    setExpandedSections((prev) => new Set(prev).add(newSection.id));
+  };
+
+  // Delete section
+  const handleDeleteSection = (sectionId: string) => {
+    if (!selectedClass) return;
+
+    const updatedClasses = classes.map((c) =>
+      c.id === selectedClass.id
+        ? { ...c, sections: c.sections.filter((s) => s.id !== sectionId) }
+        : c
+    );
+
+    setClasses(updatedClasses);
+  };
+
+  // Add/edit subgroup
+  const handleSaveSubgroup = () => {
+    if (!selectedClass || !editingSectionId || !newSubgroupForm.name) return;
+
+    const updatedClasses = classes.map((c) => {
+      if (c.id !== selectedClass.id) return c;
+
+      return {
+        ...c,
+        sections: c.sections.map((s) => {
+          if (s.id !== editingSectionId) return s;
+
+          if (editingSubgroup) {
+            // Edit existing
+            return {
+              ...s,
+              subgroups: s.subgroups.map((sg) =>
+                sg.id === editingSubgroup.subgroup.id
+                  ? { ...sg, ...newSubgroupForm }
+                  : sg
+              ),
+            };
+          } else {
+            // Add new
+            return {
+              ...s,
+              subgroups: [
+                ...s.subgroups,
+                { ...newSubgroupForm, id: `sg-${Date.now()}`, studentCount: 0 },
+              ],
+            };
+          }
+        }),
+      };
     });
-    setShowNewSection(false);
-    setNewSection({ name: "", capacity: 30 });
+
+    setClasses(updatedClasses);
+    setShowSubgroupModal(false);
+    setEditingSectionId(null);
+    setEditingSubgroup(null);
+    setNewSubgroupForm({ name: "", description: "" });
   };
 
-  const updateSection = (sectionId: number, field: keyof Section, value: string | number) => {
+  // Delete subgroup
+  const handleDeleteSubgroup = (sectionId: string, subgroupId: string) => {
     if (!selectedClass) return;
-    
-    const updatedSections = selectedClass.sections.map((s) =>
-      s.id === sectionId ? { ...s, [field]: value } : s
-    );
-    
-    setClasses(
-      classes.map((c) =>
-        c.id === selectedClass.id
-          ? { ...c, sections: updatedSections }
-          : c
-      )
-    );
-    setSelectedClass({ ...selectedClass, sections: updatedSections });
+
+    const updatedClasses = classes.map((c) => {
+      if (c.id !== selectedClass.id) return c;
+
+      return {
+        ...c,
+        sections: c.sections.map((s) => {
+          if (s.id !== sectionId) return s;
+          return {
+            ...s,
+            subgroups: s.subgroups.filter((sg) => sg.id !== subgroupId),
+          };
+        }),
+      };
+    });
+
+    setClasses(updatedClasses);
   };
 
-  const deleteSection = (sectionId: number) => {
-    if (!selectedClass) return;
-    
-    const updatedSections = selectedClass.sections.filter((s) => s.id !== sectionId);
-    
-    setClasses(
-      classes.map((c) =>
-        c.id === selectedClass.id
-          ? { ...c, sections: updatedSections }
-          : c
-      )
-    );
-    setSelectedClass({ ...selectedClass, sections: updatedSections });
+  // Get filtered classes
+  const getFilteredClasses = () => {
+    return classes.filter((c) => {
+      const matchesSearch =
+        searchQuery === "" ||
+        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesLevel =
+        filterLevel === "all" ||
+        (filterLevel === "primary" && c.level <= 3) ||
+        (filterLevel === "middle" && c.level >= 4 && c.level <= 9) ||
+        (filterLevel === "high" && c.level >= 10);
+      return matchesSearch && matchesLevel;
+    });
   };
 
+  // Calculate totals
   const getTotalStudents = () => {
-    return classes.reduce((sum, c) => sum + c.sections.reduce((s, sec) => s + sec.enrolled, 0), 0);
+    return classes.reduce((sum, c) => sum + c.studentCount, 0);
   };
 
-  const getTotalCapacity = () => {
-    return classes.reduce((sum, c) => sum + c.sections.reduce((s, sec) => s + sec.capacity, 0), 0);
+  const getTotalSections = () => {
+    return classes.reduce((sum, c) => sum + c.sections.length, 0);
+  };
+
+  const getTotalSubgroups = () => {
+    return classes.reduce(
+      (sum, c) => sum + c.sections.reduce((s, sec) => s + sec.subgroups.length, 0),
+      0
+    );
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 600 }}>Classes & Sections</h1>
-          <p className="text-muted-foreground mt-1" style={{ fontSize: "0.875rem" }}>
-            Manage grade levels and class sections
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowNewClass(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90"
-            style={{ fontSize: "0.875rem" }}
-          >
-            <Plus className="w-4 h-4" />
-            Add Grade
-          </button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-card rounded-lg border border-border p-4">
-          <p className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>Total Grades</p>
-          <p style={{ fontSize: "1.5rem", fontWeight: 600 }}>{classes.length}</p>
-        </div>
-        <div className="bg-card rounded-lg border border-border p-4">
-          <p className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>Total Sections</p>
-          <p style={{ fontSize: "1.5rem", fontWeight: 600 }}>
-            {classes.reduce((sum, c) => sum + c.sections.length, 0)}
-          </p>
-        </div>
-        <div className="bg-card rounded-lg border border-border p-4">
-          <p className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>Total Students</p>
-          <p style={{ fontSize: "1.5rem", fontWeight: 600 }}>{getTotalStudents()}</p>
-        </div>
-        <div className="bg-card rounded-lg border border-border p-4">
-          <p className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>Capacity</p>
-          <p style={{ fontSize: "1.5rem", fontWeight: 600 }}>
-            {getTotalStudents()}/{getTotalCapacity()}
-          </p>
-        </div>
-      </div>
-
-      {/* Success message */}
-      {saved && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 mb-4">
-          <Check className="w-4 h-4" />
-          <p style={{ fontSize: "0.875rem" }}>Changes saved successfully!</p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Classes List */}
-        <div className="lg:col-span-1">
-          <div className="bg-card rounded-xl border border-border">
-            <div className="p-4 border-b border-border">
-              <h2 style={{ fontSize: "0.9375rem", fontWeight: 600 }}>Grade Levels</h2>
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-[#f3f2f1]">
+      {/* Azure-style header */}
+      <div className="bg-white border-b border-[#e1dfdd] px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-[#605e5c]">
+              <FolderOpen className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4" />
+              <span className="text-sm">Academic Management</span>
+              <ChevronRight className="w-4 h-4" />
+              <span className="text-sm font-medium text-[#323130]">Classes & Sections</span>
             </div>
-            <div className="divide-y divide-border max-h-[600px] overflow-y-auto">
-              {classes.map((cls) => (
+          </div>
+          <div className="flex items-center gap-3">
+            {showSavedToast && (
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Check className="w-3 h-3 mr-1" />
+                Saved
+              </Badge>
+            )}
+            <Button
+              onClick={() => setShowClassModal(true)}
+              className="bg-[#0078d4] hover:bg-[#106ebe] text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Grade
+            </Button>
+          </div>
+        </div>
+        <h1 className="text-2xl font-semibold text-[#323130] mt-4">Classes & Sections</h1>
+        <p className="text-[#605e5c] text-sm mt-1">
+          Manage grade levels, sections, and subgroups
+        </p>
+      </div>
+
+      {/* Stats row */}
+      <div className="bg-white border-b border-[#e1dfdd] px-6 py-3">
+        <div className="grid grid-cols-4 gap-4">
+          <Card className="border-[#e1dfdd] bg-[#faf9f8]">
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="p-2 bg-[#0078d4]/10 rounded-lg">
+                <School className="w-5 h-5 text-[#0078d4]" />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold text-[#323130]">{classes.length}</p>
+                <p className="text-xs text-[#605e5c]">Total Grades</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-[#e1dfdd] bg-[#faf9f8]">
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Users className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold text-[#323130]">{getTotalSections()}</p>
+                <p className="text-xs text-[#605e5c]">Total Sections</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-[#e1dfdd] bg-[#faf9f8]">
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <ListTree className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold text-[#323130]">{getTotalSubgroups()}</p>
+                <p className="text-xs text-[#605e5c]">Total Subgroups</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-[#e1dfdd] bg-[#faf9f8]">
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <GraduationCap className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold text-[#323130]">{getTotalStudents()}</p>
+                <p className="text-xs text-[#605e5c]">Total Students</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Main content area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left sidebar */}
+        <div className="w-80 bg-white border-r border-[#e1dfdd] flex flex-col">
+          <div className="p-4 border-b border-[#e1dfdd]">
+            <h2 className="text-sm font-semibold text-[#323130] uppercase tracking-wide">
+              Grade Levels
+            </h2>
+            <p className="text-xs text-[#605e5c] mt-1">
+              {getFilteredClasses().length} resource(s)
+            </p>
+          </div>
+
+          {/* Filters */}
+          <div className="p-3 border-b border-[#e1dfdd] space-y-2">
+            <div className="flex items-center gap-2 bg-[#f3f2f1] rounded-md px-3 py-2">
+              <Search className="w-4 h-4 text-[#605e5c]" />
+              <Input
+                placeholder="Search grades..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-6 text-sm"
+              />
+            </div>
+            <Select value={filterLevel} onValueChange={(v) => setFilterLevel(v as typeof filterLevel)}>
+              <SelectTrigger className="h-8 text-sm bg-[#f3f2f1] border-0">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Filter by level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="primary">Primary (1-3)</SelectItem>
+                <SelectItem value="middle">Middle (4-9)</SelectItem>
+                <SelectItem value="high">High School (10-12)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <ScrollArea className="flex-1">
+            <div className="divide-y divide-[#e1dfdd]">
+              {getFilteredClasses().map((cls) => (
                 <div
                   key={cls.id}
-                  className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors ${
-                    selectedClass?.id === cls.id ? "bg-muted" : ""
-                  }`}
-                  onClick={() => {
-                    setSelectedClass(cls);
-                    setIsEditing(false);
-                  }}
+                  onClick={() => setSelectedClassId(cls.id)}
+                  className={cn(
+                    "p-4 cursor-pointer transition-colors hover:bg-[#f3f2f1]",
+                    selectedClassId === cls.id && "bg-[#f3f2f1] border-l-4 border-l-[#0078d4]"
+                  )}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className="w-4 h-4 text-primary" />
-                      <div>
-                        <p style={{ fontSize: "0.9375rem", fontWeight: 500 }}>{cls.name}</p>
-                        <p className="text-muted-foreground" style={{ fontSize: "0.6875rem" }}>
-                          {cls.sections.length} sections • {cls.sections.reduce((s, sec) => s + sec.enrolled, 0)} students
-                        </p>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="w-4 h-4 text-[#0078d4]" />
+                        <span className="font-medium text-[#323130] text-sm truncate">
+                          {cls.name}
+                        </span>
                       </div>
+                      <p className="text-xs text-[#605e5c] mt-1">
+                        {cls.sections.length} sections •{" "}
+                        {cls.sections.reduce((s, sec) => s + sec.subgroups.length, 0)} subgroups
+                      </p>
+                      <p className="text-xs text-[#605e5c]">
+                        {cls.studentCount} students
+                      </p>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteClass(cls.id);
-                      }}
-                      className="p-1 text-muted-foreground hover:text-red-500"
+                    <Badge
+                      variant="outline"
+                      className={cn("text-xs", getLevelColor(cls.level))}
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      L{cls.level}
+                    </Badge>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </ScrollArea>
         </div>
 
-        {/* Right: Class Details */}
-        <div className="lg:col-span-2">
+        {/* Right content area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
           {selectedClass ? (
-            <div className="bg-card rounded-xl border border-border">
-              {/* Class Header */}
-              <div className="p-4 border-b border-border flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 style={{ fontSize: "1.125rem", fontWeight: 600 }}>{selectedClass.name}</h2>
-                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">
-                      Level {selectedClass.level}
-                    </span>
+            <>
+              {/* Resource header */}
+              <div className="bg-white border-b border-[#e1dfdd] px-6 py-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-xl font-semibold text-[#323130]">
+                        {selectedClass.name}
+                      </h2>
+                      <Badge className={getLevelColor(selectedClass.level)}>
+                        {getLevelLabel(selectedClass.level)}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs",
+                          selectedClass.status === "active"
+                            ? "bg-green-50 text-green-700 border-green-200"
+                            : "bg-gray-100 text-gray-600"
+                        )}
+                      >
+                        {selectedClass.status}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-[#605e5c] mt-1">
+                      Level {selectedClass.level} • {selectedClass.description}
+                    </p>
                   </div>
-                  <p className="text-muted-foreground mt-1" style={{ fontSize: "0.8125rem" }}>
-                    {selectedClass.description}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={expandAll}
+                    >
+                      Expand All
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={collapseAll}
+                    >
+                      Collapse All
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowSectionModal(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Section
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSave}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4 mr-2" />
+                      )}
+                      Save
+                    </Button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border hover:bg-muted"
-                  style={{ fontSize: "0.8125rem" }}
-                >
-                  <Edit2 className="w-4 h-4" />
-                  {isEditing ? "Cancel" : "Edit"}
-                </button>
               </div>
 
-              {/* Sections */}
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 style={{ fontSize: "1rem", fontWeight: 600 }}>Sections</h3>
-                  {isEditing && (
-                    <button
-                      onClick={() => setShowNewSection(true)}
-                      className="flex items-center gap-1 text-primary hover:underline"
-                      style={{ fontSize: "0.8125rem" }}
-                    >
-                      <Plus className="w-3 h-3" />
-                      Add Section
-                    </button>
+              {/* Hierarchy view */}
+              <ScrollArea className="flex-1 p-6">
+                <div className="space-y-4 max-w-4xl">
+                  {/* Level 1: Grade Header */}
+                  <Card className="border-[#0078d4] border-2 bg-white">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-[#0078d4] flex items-center justify-center">
+                            <School className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg font-semibold text-[#323130]">
+                              {selectedClass.name}
+                            </CardTitle>
+                            <p className="text-sm text-[#605e5c]">
+                              {selectedClass.studentCount} students • {selectedClass.sections.length} sections
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteClass(selectedClass.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                  </Card>
+
+                  {/* Level 2: Sections */}
+                  {selectedClass.sections.length === 0 ? (
+                    <div className="text-center py-12 bg-white rounded-lg border border-[#e1dfdd] border-dashed">
+                      <LayoutGrid className="w-12 h-12 text-[#605e5c] mx-auto mb-4 opacity-50" />
+                      <h3 className="text-lg font-medium text-[#323130]">No sections defined</h3>
+                      <p className="text-sm text-[#605e5c] mt-1">
+                        Add sections to organize students into manageable groups
+                      </p>
+                      <Button
+                        className="mt-4 bg-[#0078d4] hover:bg-[#106ebe]"
+                        onClick={() => setShowSectionModal(true)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add First Section
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 pl-4">
+                      {selectedClass.sections.map((section) => {
+                        const isExpanded = expandedSections.has(section.id);
+
+                        return (
+                          <div key={section.id} className="relative">
+                            {/* Connection line */}
+                            <div className="absolute -left-4 top-8 w-4 h-px bg-[#e1dfdd]" />
+                            
+                            {/* Section Card */}
+                            <Card className="border-[#e1dfdd] bg-white">
+                              <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <button
+                                      onClick={() => toggleSection(section.id)}
+                                      className="p-1 hover:bg-[#f3f2f1] rounded"
+                                    >
+                                      {isExpanded ? (
+                                        <ChevronDown className="w-5 h-5 text-[#605e5c]" />
+                                      ) : (
+                                        <ChevronRight className="w-5 h-5 text-[#605e5c]" />
+                                      )}
+                                    </button>
+                                    <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                                      <Users className="w-4 h-4 text-green-600" />
+                                    </div>
+                                    <div>
+                                      <CardTitle className="text-base font-semibold text-[#323130]">
+                                        {section.name}
+                                      </CardTitle>
+                                      <p className="text-sm text-[#605e5c]">
+                                        {section.studentCount} students • {section.subgroups.length} subgroups
+                                        {section.description && ` • ${section.description}`}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setEditingSectionId(section.id);
+                                        setShowSubgroupModal(true);
+                                      }}
+                                    >
+                                      <Plus className="w-4 h-4 mr-1" />
+                                      Subgroup
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => handleDeleteSection(section.id)}
+                                    >
+                                      <Trash2 className="w-4 h-4 text-red-500" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </CardHeader>
+
+                              {/* Level 3: Subgroups */}
+                              {isExpanded && section.subgroups.length > 0 && (
+                                <CardContent className="pt-0">
+                                  <div className="space-y-2 pl-12">
+                                    {section.subgroups.map((subgroup) => (
+                                      <div
+                                        key={subgroup.id}
+                                        className="relative flex items-center justify-between p-3 bg-[#faf9f8] rounded-md border border-[#e1dfdd]"
+                                      >
+                                        {/* Connection line */}
+                                        <div className="absolute -left-6 top-1/2 w-6 h-px bg-[#e1dfdd]" />
+                                        
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-6 h-6 rounded bg-purple-100 flex items-center justify-center">
+                                            <BookOpen className="w-3 h-3 text-purple-600" />
+                                          </div>
+                                          <div>
+                                            <p className="font-medium text-[#323130] text-sm">
+                                              {subgroup.name}
+                                            </p>
+                                            <p className="text-xs text-[#605e5c]">
+                                              {subgroup.studentCount} students
+                                              {subgroup.description && ` • ${subgroup.description}`}
+                                            </p>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={() => {
+                                              setEditingSectionId(section.id);
+                                              setEditingSubgroup({ sectionId: section.id, subgroup });
+                                              setNewSubgroupForm({
+                                                name: subgroup.name,
+                                                description: subgroup.description || "",
+                                              });
+                                              setShowSubgroupModal(true);
+                                            }}
+                                          >
+                                            <Edit2 className="w-3.5 h-3.5 text-[#605e5c]" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={() => handleDeleteSubgroup(section.id, subgroup.id)}
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </CardContent>
+                              )}
+
+                              {isExpanded && section.subgroups.length === 0 && (
+                                <CardContent className="pt-0">
+                                  <div className="pl-12 py-3 text-center bg-[#faf9f8] rounded-md border border-dashed border-[#e1dfdd]">
+                                    <p className="text-sm text-[#605e5c]">
+                                      No subgroups defined
+                                    </p>
+                                    <Button
+                                      variant="link"
+                                      size="sm"
+                                      onClick={() => {
+                                        setEditingSectionId(section.id);
+                                        setShowSubgroupModal(true);
+                                      }}
+                                    >
+                                      Add your first subgroup
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              )}
+                            </Card>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
-
-                {selectedClass.sections.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-                    <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
-                      No sections defined yet
-                    </p>
-                    {isEditing && (
-                      <button
-                        onClick={() => setShowNewSection(true)}
-                        className="mt-2 text-primary hover:underline"
-                        style={{ fontSize: "0.8125rem" }}
-                      >
-                        Add your first section
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {selectedClass.sections.map((section) => (
-                      <div
-                        key={section.id}
-                        className="p-4 rounded-lg border border-border bg-muted/30"
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          {isEditing ? (
-                            <input
-                              type="text"
-                              value={section.name}
-                              onChange={(e) => updateSection(section.id, "name", e.target.value)}
-                              className="px-2 py-1 rounded border border-border bg-background font-medium"
-                              style={{ fontSize: "0.9375rem" }}
-                            />
-                          ) : (
-                            <span style={{ fontSize: "0.9375rem", fontWeight: 500 }}>
-                              {section.name}
-                            </span>
-                          )}
-                          {isEditing && (
-                            <button
-                              onClick={() => deleteSection(section.id)}
-                              className="p-1 text-muted-foreground hover:text-red-500"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 ml-0">
-                          <div>
-                            <label className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>
-                              Capacity
-                            </label>
-                            {isEditing ? (
-                              <input
-                                type="number"
-                                value={section.capacity}
-                                onChange={(e) => updateSection(section.id, "capacity", parseInt(e.target.value) || 0)}
-                                className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background"
-                                style={{ fontSize: "0.875rem" }}
-                                min={0}
-                              />
-                            ) : (
-                              <p style={{ fontSize: "0.875rem" }}>{section.capacity}</p>
-                            )}
-                          </div>
-                          <div>
-                            <label className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>
-                              Enrolled
-                            </label>
-                            <p style={{ fontSize: "0.875rem" }}>{section.enrolled}</p>
-                          </div>
-                        </div>
-                        {/* Progress bar */}
-                        <div className="mt-3">
-                          <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary transition-all"
-                              style={{ width: `${Math.min((section.enrolled / section.capacity) * 100, 100)}%` }}
-                            />
-                          </div>
-                          <p className="text-muted-foreground mt-1" style={{ fontSize: "0.6875rem" }}>
-                            {Math.round((section.enrolled / section.capacity) * 100)}% full
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Save Button */}
-              {isEditing && (
-                <div className="p-4 border-t border-border">
-                  <button
-                    onClick={handleSave}
-                    disabled={loading}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-60"
-                    style={{ fontSize: "0.875rem" }}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        Save Changes
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
+              </ScrollArea>
+            </>
           ) : (
-            <div className="bg-card rounded-xl border border-border p-8 text-center">
-              <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-              <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
-                Select a grade level to view sections
-              </p>
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <FolderOpen className="w-16 h-16 text-[#605e5c] mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-medium text-[#323130]">Select a Grade Level</h3>
+                <p className="text-sm text-[#605e5c] mt-1">
+                  Choose a grade level from the sidebar to view and manage its hierarchy
+                </p>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* New Class Modal */}
-      {showNewClass && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-xl border border-border w-full max-w-md">
-            <div className="p-4 border-b border-border">
-              <h2 style={{ fontSize: "1.125rem", fontWeight: 600 }}>Add Grade Level</h2>
+      {/* Add Class Modal */}
+      <Dialog open={showClassModal} onOpenChange={setShowClassModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add Grade Level</DialogTitle>
+            <DialogDescription>
+              Create a new grade level for your school.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium text-[#323130]">Grade Name *</label>
+              <Input
+                placeholder="e.g., Grade 4"
+                value={newClassForm.name}
+                onChange={(e) => setNewClassForm({ ...newClassForm, name: e.target.value })}
+                className="mt-1"
+              />
             </div>
-            <div className="p-4 space-y-4">
-              <div>
-                <label style={{ fontSize: "0.875rem" }}>Grade Name *</label>
-                <input
-                  type="text"
-                  value={newClass.name}
-                  onChange={(e) => setNewClass({ ...newClass, name: e.target.value })}
-                  placeholder="e.g., Grade 1"
-                  className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background"
-                  style={{ fontSize: "0.875rem" }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: "0.875rem" }}>Level Number *</label>
-                <input
-                  type="number"
-                  value={newClass.level || ""}
-                  onChange={(e) => setNewClass({ ...newClass, level: parseInt(e.target.value) || 0 })}
-                  placeholder="e.g., 1"
-                  className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background"
-                  style={{ fontSize: "0.875rem" }}
-                  min={1}
-                  max={12}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: "0.875rem" }}>Description</label>
-                <textarea
-                  value={newClass.description}
-                  onChange={(e) => setNewClass({ ...newClass, description: e.target.value })}
-                  placeholder="Brief description of this grade"
-                  className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background"
-                  style={{ fontSize: "0.875rem" }}
-                  rows={3}
-                />
-              </div>
+            <div>
+              <label className="text-sm font-medium text-[#323130]">Level *</label>
+              <Input
+                type="number"
+                min={1}
+                max={12}
+                value={newClassForm.level}
+                onChange={(e) => setNewClassForm({ ...newClassForm, level: parseInt(e.target.value) || 1 })}
+                className="mt-1"
+              />
             </div>
-            <div className="p-4 border-t border-border flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowNewClass(false);
-                  setNewClass({ name: "", level: 0, description: "" });
-                }}
-                className="px-4 py-2 rounded-lg border border-border hover:bg-muted"
-                style={{ fontSize: "0.875rem" }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={addClass}
-                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90"
-                style={{ fontSize: "0.875rem" }}
-              >
-                Create Grade
-              </button>
+            <div>
+              <label className="text-sm font-medium text-[#323130]">Description</label>
+              <Input
+                placeholder="Brief description of this grade"
+                value={newClassForm.description}
+                onChange={(e) => setNewClassForm({ ...newClassForm, description: e.target.value })}
+                className="mt-1"
+              />
             </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowClassModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddClass}
+              disabled={!newClassForm.name}
+              className="bg-[#0078d4] hover:bg-[#106ebe]"
+            >
+              Create Grade
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {/* New Section Modal */}
-      {showNewSection && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-xl border border-border w-full max-w-md">
-            <div className="p-4 border-b border-border">
-              <h2 style={{ fontSize: "1.125rem", fontWeight: 600 }}>Add Section</h2>
+      {/* Add Section Modal */}
+      <Dialog open={showSectionModal} onOpenChange={setShowSectionModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add Section</DialogTitle>
+            <DialogDescription>
+              Add a new section to {selectedClass?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium text-[#323130]">Section Name *</label>
+              <Input
+                placeholder="e.g., Section A"
+                value={newSectionForm.name}
+                onChange={(e) => setNewSectionForm({ ...newSectionForm, name: e.target.value })}
+                className="mt-1"
+              />
             </div>
-            <div className="p-4 space-y-4">
-              <div>
-                <label style={{ fontSize: "0.875rem" }}>Section Name *</label>
-                <input
-                  type="text"
-                  value={newSection.name}
-                  onChange={(e) => setNewSection({ ...newSection, name: e.target.value })}
-                  placeholder="e.g., Section A"
-                  className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background"
-                  style={{ fontSize: "0.875rem" }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: "0.875rem" }}>Capacity *</label>
-                <input
-                  type="number"
-                  value={newSection.capacity}
-                  onChange={(e) => setNewSection({ ...newSection, capacity: parseInt(e.target.value) || 0 })}
-                  className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background"
-                  style={{ fontSize: "0.875rem" }}
-                  min={1}
-                />
-              </div>
-            </div>
-            <div className="p-4 border-t border-border flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowNewSection(false);
-                  setNewSection({ name: "", capacity: 30 });
-                }}
-                className="px-4 py-2 rounded-lg border border-border hover:bg-muted"
-                style={{ fontSize: "0.875rem" }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={addSection}
-                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90"
-                style={{ fontSize: "0.875rem" }}
-              >
-                Add Section
-              </button>
+            <div>
+              <label className="text-sm font-medium text-[#323130]">Description</label>
+              <Input
+                placeholder="Brief description"
+                value={newSectionForm.description}
+                onChange={(e) => setNewSectionForm({ ...newSectionForm, description: e.target.value })}
+                className="mt-1"
+              />
             </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSectionModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddSection}
+              disabled={!newSectionForm.name}
+              className="bg-[#0078d4] hover:bg-[#106ebe]"
+            >
+              Add Section
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add/Edit Subgroup Modal */}
+      <Dialog
+        open={showSubgroupModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingSectionId(null);
+            setEditingSubgroup(null);
+            setNewSubgroupForm({ name: "", description: "" });
+          }
+          setShowSubgroupModal(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingSubgroup ? "Edit Subgroup" : "Add Subgroup"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingSubgroup
+                ? "Update subgroup details."
+                : "Add a new subgroup to the selected section."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium text-[#323130]">Subgroup Name *</label>
+              <Input
+                placeholder="e.g., Red Group"
+                value={newSubgroupForm.name}
+                onChange={(e) => setNewSubgroupForm({ ...newSubgroupForm, name: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[#323130]">Description</label>
+              <Input
+                placeholder="Brief description"
+                value={newSubgroupForm.description}
+                onChange={(e) => setNewSubgroupForm({ ...newSubgroupForm, description: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSubgroupModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveSubgroup}
+              disabled={!newSubgroupForm.name}
+              className="bg-[#0078d4] hover:bg-[#106ebe]"
+            >
+              {editingSubgroup ? "Save Changes" : "Add Subgroup"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
