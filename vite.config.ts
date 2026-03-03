@@ -24,7 +24,12 @@ export default defineConfig({
   // Allow hosting on any domain
   server: {
     host: "0.0.0.0",
-    allowedHosts: "all",
+    allowedHosts: [
+      ".ngrok-free.app",
+      ".ngrok-free.dev",
+      ".ngrok.io",
+      ".ngrok.app",
+    ],
   },
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
