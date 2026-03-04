@@ -1,0 +1,33 @@
+export const departments = [
+  { id: 'dept_english', organisationId: 'org_001', name: 'English', headOfDepartmentId: 'usr_031', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'dept_maths', organisationId: 'org_001', name: 'Mathematics', headOfDepartmentId: 'usr_032', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'dept_science', organisationId: 'org_001', name: 'Science', headOfDepartmentId: 'usr_033', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'dept_humanities', organisationId: 'org_001', name: 'Humanities', headOfDepartmentId: 'usr_034', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'dept_mfl', organisationId: 'org_001', name: 'Modern Foreign Languages', headOfDepartmentId: 'usr_035', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'dept_computing', organisationId: 'org_001', name: 'Computing', headOfDepartmentId: 'usr_036', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'dept_arts', organisationId: 'org_001', name: 'Arts & Technology', headOfDepartmentId: 'usr_037', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'dept_pe', organisationId: 'org_001', name: 'Physical Education', headOfDepartmentId: 'usr_038', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'dept_re', organisationId: 'org_001', name: 'Religious Studies & PSHE', headOfDepartmentId: 'usr_039', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'dept_business', organisationId: 'org_001', name: 'Business & Social Sciences', headOfDepartmentId: 'usr_040', createdAt: '2020-09-01T00:00:00Z' },
+]
+
+export const subjects = [
+  { id: 'sub_eng_lang', organisationId: 'org_001', name: 'English Language', code: 'EL', departmentId: 'dept_english', color: '#7C3AED', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_eng_lit', organisationId: 'org_001', name: 'English Literature', code: 'ELit', departmentId: 'dept_english', color: '#6D28D9', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_maths', organisationId: 'org_001', name: 'Mathematics', code: 'MA', departmentId: 'dept_maths', color: '#2563EB', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_bio', organisationId: 'org_001', name: 'Biology', code: 'BI', departmentId: 'dept_science', color: '#16A34A', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_chem', organisationId: 'org_001', name: 'Chemistry', code: 'CH', departmentId: 'dept_science', color: '#0891B2', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_phys', organisationId: 'org_001', name: 'Physics', code: 'PH', departmentId: 'dept_science', color: '#0E7490', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_hist', organisationId: 'org_001', name: 'History', code: 'HI', departmentId: 'dept_humanities', color: '#B45309', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_geo', organisationId: 'org_001', name: 'Geography', code: 'GE', departmentId: 'dept_humanities', color: '#65A30D', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_fr', organisationId: 'org_001', name: 'French', code: 'FR', departmentId: 'dept_mfl', color: '#DC2626', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_es', organisationId: 'org_001', name: 'Spanish', code: 'SP', departmentId: 'dept_mfl', color: '#EA580C', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_cs', organisationId: 'org_001', name: 'Computer Science', code: 'CS', departmentId: 'dept_computing', color: '#0F172A', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_art', organisationId: 'org_001', name: 'Art & Design', code: 'AR', departmentId: 'dept_arts', color: '#DB2777', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_dt', organisationId: 'org_001', name: 'Design & Technology', code: 'DT', departmentId: 'dept_arts', color: '#9333EA', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_mus', organisationId: 'org_001', name: 'Music', code: 'MU', departmentId: 'dept_arts', color: '#7E22CE', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_pe', organisationId: 'org_001', name: 'Physical Education', code: 'PE', departmentId: 'dept_pe', color: '#059669', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_re', organisationId: 'org_001', name: 'Religious Studies', code: 'RS', departmentId: 'dept_re', color: '#D97706', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_bus', organisationId: 'org_001', name: 'Business Studies', code: 'BS', departmentId: 'dept_business', color: '#0284C7', createdAt: '2020-09-01T00:00:00Z' },
+  { id: 'sub_soc', organisationId: 'org_001', name: 'Sociology', code: 'SO', departmentId: 'dept_business', color: '#7C3AED', createdAt: '2020-09-01T00:00:00Z' },
+]
